@@ -20,8 +20,11 @@ export async function createTestDatabase(): Promise<Database> {
 export async function truncateAll(db: Database): Promise<void> {
   await db.exec(`
     TRUNCATE TABLE
-      domain_event, audit_log, pod_membership, pod, role_assignment,
-      app_user, holding, org
+      domain_event, audit_log,
+      cloud_agreement_archive_confirmation, cloud_agreement_event, cloud_agreement,
+      weekly_checkin, pitch, pod_lead_vote, pod_lead_term, pod_cycle_plan,
+      cycle_milestone_reminder, sprint_cycle, cycle_config, org_governance_config,
+      pod_membership, pod, role_assignment, app_user, holding, org
     RESTART IDENTITY CASCADE;
   `);
 }

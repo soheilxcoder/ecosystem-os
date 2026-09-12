@@ -98,6 +98,61 @@ export function toAuditLogEntry(row: any): AuditLogEntry {
   };
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+export function toCloudAgreement(row: any): import('../../core/types').CloudAgreement {
+  return {
+    id: row.id,
+    orgId: row.org_id,
+    podAId: row.pod_a_id,
+    podBId: row.pod_b_id,
+    name: row.name,
+    serviceDescription: row.service_description,
+    direction: row.direction,
+    cadence: row.cadence,
+    frequency: row.frequency ?? null,
+    pricingTerms: (row.pricing_terms ?? {}) as import('../../core/types').CloudPricingTerms,
+    status: row.status,
+    awaitingPodId: row.awaiting_pod_id ?? null,
+    createdByUserId: row.created_by_user_id ?? null,
+    startDate: optionalDate(row.start_date),
+    renewalDate: optionalDate(row.renewal_date),
+    activatedAt: row.activated_at ? (row.activated_at.toISOString?.() ?? row.activated_at) : null,
+    createdAt: row.created_at?.toISOString?.() ?? row.created_at,
+    updatedAt: row.last_updated_at?.toISOString?.() ?? row.last_updated_at,
+  };
+}
+
+export function toCloudAgreementEvent(row: any): import('../../core/types').CloudAgreementEvent {
+  return {
+    id: row.id,
+    agreementId: row.agreement_id,
+    eventType: row.event_type,
+    actorUserId: row.actor_user_id ?? null,
+    terms: (row.terms ?? null) as import('../../core/types').CloudTerms | null,
+    note: row.note ?? null,
+    createdAt: row.created_at?.toISOString?.() ?? row.created_at,
+  };
+}
+
+export function toCloudArchiveConfirmation(
+  row: any,
+): import('../../core/types').CloudArchiveConfirmation {
+  return {
+    id: row.id,
+    agreementId: row.agreement_id,
+    podId: row.pod_id,
+    confirmedByUserId: row.confirmed_by_user_id ?? null,
+    note: row.note ?? null,
+    createdAt: row.created_at?.toISOString?.() ?? row.created_at,
+  };
+}
+
+function optionalDate(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  return toDateString(value);
+}
+
 /** Postgres DATE columns arrive as a Date (pg) or an ISO string (PGlite). */
 export function toDateString(value: unknown): string {
   if (value instanceof Date) return value.toISOString().slice(0, 10);

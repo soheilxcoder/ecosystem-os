@@ -43,11 +43,16 @@ app/                     Next.js App Router — screens only, no SQL
 components/
   ui/                    design-system primitives + icon set
   layout/                sidebar, top bar, mobile tab bar, shell
+  calendar/              Cycle Wheel + pipeline bar (Module 06)
+  pods/                  pod forms (Module 03)
+  agreements/            wizard, term fields, network graph, actions (Module 04)
 core/                    pure domain logic, shared by web + API (no I/O)
   permissions.ts         role/permission matrix + authorize()
   rotation.ts            rotation countdown math
   events.ts              internal event bus
   time.ts                UTC day math (the only place days are counted)
+  calendar.ts            phase math + window predicates (Module 06)
+  agreements.ts          CLOU terms, status and graph computation (Module 04)
 db/                      all SQL lives here
   client.ts              driver adapter (PGlite | node-postgres)
   migrations/            numbered, checksummed SQL files
@@ -57,6 +62,7 @@ server/                  Fastify API — the only process that touches the datab
   auth/                  session tokens, OIDC client, auth service
   middleware/auth.ts     authorize() wired to every request
   routes/                one file per module
+  services/              module business rules (the only place rules live)
   config.ts              validated environment configuration
 tests/                   unit (fast) + integration (real DB, real HTTP)
 ```
@@ -160,13 +166,35 @@ Built in the order dictated by `14-ROADMAP-FOR-AGENT.md`.
 |---|---|---|
 | **0** | Foundations: schema, auth + `authorize()`, event bus, design tokens, base components, shell | ✅ done |
 | **1** | Pods & Teams (03) + Sprint Calendar (06) | ✅ done |
-| 2 | CLOU Agreements (04) | ⏳ next |
+| **2** | CLOU Agreements (04) | ✅ done |
 | 3 | Peer Review & Governance (08) | ⬜ |
 | 4 | Internal Budget Market (05) | ⬜ |
 | 5 | Coaching (07) | ⬜ |
 | 6 | Notifications (11) + Archive (10) | ⬜ |
 | 7 | Strategic Hub / Admin Console (09) | ⬜ |
 | 8 | Hardening: accessibility pass, security review, load test, correction records | ⬜ |
+
+### Phase 2 — definition of done
+
+- [x] Proposal wizard (`/agreements/new`) with the Step-1 guardrail: [Continue]
+      stays disabled until the exchange is described, and **the server rejects a
+      proposal with an empty description** (400, same message) — verified end to
+      end through the real form POST, not only through the browser state
+- [x] `/agreements/active`: list view with the specified columns, filters by
+      pod / holding / status, and a List ↔ Network graph toggle
+- [x] Network graph: nodes = pods, solid directed edges = agreements in force,
+      and **every** pod drawn with a faint dotted line to the central
+      "Platform & Budget Market" hub — computed on each render, never stored
+- [x] **Unrelated pods are connected only via the shared-infrastructure dotted
+      line** — asserted structurally (`hubEdges.length === pods.length`, and a
+      property test that every drawn edge maps to an in-force agreement)
+- [x] Proposals inbox with accept / counter-propose / decline; a decline
+      requires a one-line reason that the proposing pod can read
+- [x] Agreement detail: terms, status history, activity log with term snapshots,
+      live escalation contacts, renegotiation, renewal, and a two-party archive
+      (one pod's confirmation never archives anything)
+- [x] Escalation contacts resolve live from the current `pod_lead` rotation and
+      render with their countdown — a rotated-out seat shows as vacant
 
 ### Phase 1 — definition of done
 

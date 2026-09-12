@@ -32,6 +32,24 @@ export function parseISODate(date: ISODate): Date {
   return new Date(`${date}T00:00:00Z`);
 }
 
+/**
+ * Format an ISO-8601 instant (a timestamptz from the API) for display.
+ * Dates in this product are always UTC calendar dates, so the timezone is
+ * pinned rather than left to the reader's locale settings.
+ */
+export function formatDateTime(value: string, locale = 'en-GB'): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString(locale, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  });
+}
+
 /** Format a Date (or timestamp) as an ISO date using UTC calendar fields. */
 export function toISODate(date: Date | number | string = new Date()): ISODate {
   const d = date instanceof Date ? date : new Date(date);

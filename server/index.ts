@@ -26,7 +26,9 @@ import { registerAuthRoutes } from './routes/auth';
 import { registerMeRoutes } from './routes/me';
 import { registerCalendarRoutes } from './routes/calendar';
 import { registerPodRoutes } from './routes/pods';
+import { registerAgreementRoutes } from './routes/agreements';
 import type { PodServiceContext } from './services/pods';
+import type { AgreementServiceContext } from './services/agreements';
 import { startScheduler } from './jobs/scheduler';
 
 export interface ServerContext {
@@ -115,12 +117,14 @@ export async function buildServer(options: BuildServerOptions = {}): Promise<Fas
   // Shared context for the pod services: every time-boxed rule resolves
   // "today" through the same injected clock.
   const podContext = (): PodServiceContext => ({ db, bus, today });
+  const agreementContext = (): AgreementServiceContext => ({ db, bus, today });
 
   registerHealthRoutes(app, { db });
   registerAuthRoutes(app, { authService, db });
   registerMeRoutes(app, { db, today });
   registerCalendarRoutes(app, { db, today, podContext });
   registerPodRoutes(app, { db, today, podContext });
+  registerAgreementRoutes(app, { db, today, agreementContext });
 
   app.setNotFoundHandler((request, reply) => {
     void reply.code(404).send({

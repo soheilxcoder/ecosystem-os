@@ -38,7 +38,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: IconDashboard, phase: 0, available: true, primary: true },
   { href: '/pod', label: 'My Pod', icon: IconPod, phase: 1, available: true, primary: true },
-  { href: '/agreements', label: 'Agreements (CLOU)', icon: IconAgreement, phase: 2, available: false },
+  { href: '/agreements', label: 'Agreements (CLOU)', icon: IconAgreement, phase: 2, available: true },
   { href: '/budget', label: 'Budget Market', icon: IconBudget, phase: 4, available: false, primary: true },
   { href: '/calendar', label: 'Sprint Calendar', icon: IconCalendar, phase: 1, available: true, primary: true },
   { href: '/coaching', label: 'Coaching', icon: IconCoaching, phase: 5, available: false },

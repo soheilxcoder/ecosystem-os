@@ -13,6 +13,8 @@ export interface FixtureWorld {
   otherHoldingId: string;
   podAId: string;
   podBId: string;
+  /** A third pod, in the other holding — the "unrelated pod" for graph tests. */
+  podCId: string;
   users: Record<string, string>;
 }
 
@@ -29,7 +31,12 @@ export async function seedFixtureWorld(db: Database): Promise<FixtureWorld> {
 
   const podA = await createPod(db, { holdingId: holding.id, name: 'Pod Atlas', categoryTag: 'Sales', status: 'active' });
   const podB = await createPod(db, { holdingId: holding.id, name: 'Pod Basalt', categoryTag: 'Production', status: 'active' });
-  await createPod(db, { holdingId: otherHolding.id, name: 'Pod Cinder', categoryTag: 'R&D', status: 'trial' });
+  const podC = await createPod(db, {
+    holdingId: otherHolding.id,
+    name: 'Pod Cinder',
+    categoryTag: 'R&D',
+    status: 'trial',
+  });
 
   // Returns the user id, ready to use as a foreign key.
   const makeUser = async (name: string, email: string): Promise<string> =>
@@ -77,6 +84,7 @@ export async function seedFixtureWorld(db: Database): Promise<FixtureWorld> {
     otherHoldingId: otherHolding.id,
     podAId: podA.id,
     podBId: podB.id,
+    podCId: podC.id,
     users: { lead, member, third, otherLead, otherMember, coach, architect, outsider },
   };
 }
