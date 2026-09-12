@@ -37,12 +37,18 @@ export async function seedFixtureWorld(db: Database): Promise<FixtureWorld> {
 
   const lead = await makeUser('Lena Lead', 'lena@example.org');
   const member = await makeUser('Mo Member', 'mo@example.org');
+  const third = await makeUser('Nadia Nine', 'nadia@example.org');
+  const otherLead = await makeUser('Omar Ops', 'omar@example.org');
+  const otherMember = await makeUser('Quinn QC', 'quinn@example.org');
   const coach = await makeUser('Cora Coach', 'cora@example.org');
   const architect = await makeUser('Ari Architect', 'ari@example.org');
   const outsider = await makeUser('No Role Yet', 'noroles@example.org');
 
   await addPodMember(db, { podId: podA.id, userId: lead, joinedAt: '2026-01-01' });
   await addPodMember(db, { podId: podA.id, userId: member, joinedAt: '2026-01-01' });
+  await addPodMember(db, { podId: podA.id, userId: third, joinedAt: '2026-01-15' });
+  await addPodMember(db, { podId: podB.id, userId: otherLead, joinedAt: '2025-06-01' });
+  await addPodMember(db, { podId: podB.id, userId: otherMember, joinedAt: '2026-01-01' });
 
   const role = (
     userId: string,
@@ -56,8 +62,13 @@ export async function seedFixtureWorld(db: Database): Promise<FixtureWorld> {
   await role(lead, 'pod_member', 'pod', podA.id);
   await role(lead, 'pod_lead', 'pod', podA.id, '2026-01-01', '2026-12-31');
   await role(member, 'pod_member', 'pod', podA.id);
-  await role(coach, 'coach', 'pod', podA.id, '2026-01-01', '2026-06-30');
-  await role(coach, 'coach', 'pod', podB.id, '2026-01-01', '2026-06-30');
+  await role(third, 'pod_member', 'pod', podA.id);
+  await role(otherLead, 'pod_member', 'pod', podB.id);
+  // Omar leads the other pod, so lead-only actions have a second principal.
+  await role(otherLead, 'pod_lead', 'pod', podB.id, '2026-01-01', '2026-12-31');
+  await role(otherMember, 'pod_member', 'pod', podB.id);
+  await role(coach, 'coach', 'pod', podA.id, '2026-01-01', '2026-12-31');
+  await role(coach, 'coach', 'pod', podB.id, '2026-01-01', '2026-12-31');
   await role(architect, 'hub_architecture', 'org', null);
 
   return {
@@ -66,7 +77,7 @@ export async function seedFixtureWorld(db: Database): Promise<FixtureWorld> {
     otherHoldingId: otherHolding.id,
     podAId: podA.id,
     podBId: podB.id,
-    users: { lead, member, coach, architect, outsider },
+    users: { lead, member, third, otherLead, otherMember, coach, architect, outsider },
   };
 }
 

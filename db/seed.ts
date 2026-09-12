@@ -15,8 +15,11 @@
 import { createDatabase } from './client';
 import { migrate } from './migrate';
 import { createHolding, createOrg, createUser } from './repositories/users';
-import { addPodMember, createPod } from './repositories/pods';
+import { addPodMember, createCheckin, createPod, createPodLeadTerm } from './repositories/pods';
 import { assignRole } from './repositories/roles';
+import { createCycleConfig, upsertGovernanceConfig } from './repositories/calendar';
+import { startCycle } from '../server/services/calendar';
+import { DEFAULT_PHASE_BOUNDARIES } from '../core/calendar';
 import { loadEnv } from '../server/config';
 import { addDays, todayISO } from '../core/time';
 import type { RoleType, ScopeType, UUID } from '../core/types';
@@ -46,6 +49,26 @@ async function main(): Promise<void> {
     // Sprint cadence: this cycle started 40 days ago, so the demo sits inside
     // the Days 4–80 execution window.
     const cycleStart = addDays(TODAY, -40);
+
+    await createCycleConfig(db, {
+      orgId: org.id,
+      holdingId: null,
+      cycleLengthDays: 90,
+      phaseBoundaries: { ...DEFAULT_PHASE_BOUNDARIES },
+      effectiveFromCycleNumber: 1,
+      note: 'Default 90-day cycle from the operating model',
+    });
+    await upsertGovernanceConfig(db, {
+      orgId: org.id,
+      tieBreakRule: 'longest_tenure',
+      allowLeadReElection: false,
+    });
+
+    const cycle = await startCycle(db, {
+      orgId: org.id,
+      holdingId: null,
+      startDate: cycleStart,
+    });
     const termEnd = addDays(cycleStart, TERM_DAYS - 1);
     const coachEnd = addDays(TODAY, 120);
     const trialEnd = addDays(TODAY, 55);
@@ -154,6 +177,46 @@ async function main(): Promise<void> {
     await role(ilyas, 'investor', 'holding', pars.id, addDays(TODAY, -300));
     await role(hana, 'holding_executive', 'holding', pars.id, addDays(TODAY, -300));
 
+    // Pod Lead terms for this cycle — the rotation history the UI shows.
+    for (const [podId, leadId] of [
+      [atlas.id, lena],
+      [basalt.id, omar],
+      [cinder.id, rana],
+    ] as Array<[UUID, UUID]>) {
+      await createPodLeadTerm(db, {
+        podId,
+        cycleId: cycle.id,
+        userId: leadId,
+        startDate: cycle.startDate,
+        endDate: cycle.endDate,
+        voteTally: null,
+      });
+    }
+
+    // A few weekly check-ins so the log is not empty.
+    await createCheckin(db, {
+      podId: atlas.id,
+      cycleId: cycle.id,
+      authorUserId: lena,
+      weekNumber: 1,
+      body: 'Pipeline review done; two enterprise proposals out for signature.',
+    });
+    await createCheckin(db, {
+      podId: atlas.id,
+      cycleId: cycle.id,
+      authorUserId: lena,
+      weekNumber: 2,
+      body: 'Blocked on the data export from Pod Basalt — raised with our coach.',
+      atRiskFlag: true,
+    });
+    await createCheckin(db, {
+      podId: basalt.id,
+      cycleId: cycle.id,
+      authorUserId: omar,
+      weekNumber: 2,
+      body: 'Production line changeover completed two days ahead of plan.',
+    });
+
     // Noor has no role assignments: the platform must render a truthful
     // "no active role" empty state rather than letting her act anywhere.
 
@@ -163,7 +226,9 @@ async function main(): Promise<void> {
       `[seed]   pods: ${[atlas, basalt, cinder, dune, ember].map((p) => p.name).join(', ')}`,
     );
     console.log('[seed]   16 users, including one with no active role (noor@example.org)');
-    console.log(`[seed]   cycle started ${cycleStart}; pod lead terms end ${termEnd}`);
+    console.log(
+      `[seed]   cycle ${cycle.cycleNumber} started ${cycle.startDate}, ends ${cycle.endDate} (day ${40 + 1} of 90 today)`,
+    );
     console.log('[seed] sign in with any @example.org address, e.g. lena@example.org');
   } finally {
     await db.close();

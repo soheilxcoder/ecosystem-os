@@ -19,11 +19,14 @@ import { persistDomainEvent } from '../db/repositories/audit';
 import { todayISO, type ISODate } from '../core/time';
 import { loadEnv, type Env } from './config';
 import { AuthService, AuthError } from './auth/service';
+import { WindowClosedError } from './services/pods';
 import { registerAuthMiddleware } from './middleware/auth';
 import { registerHealthRoutes } from './routes/health';
 import { registerAuthRoutes } from './routes/auth';
 import { registerMeRoutes } from './routes/me';
+import { registerCalendarRoutes } from './routes/calendar';
 import { registerPodRoutes } from './routes/pods';
+import type { PodServiceContext } from './services/pods';
 
 export interface ServerContext {
   db: Database;
@@ -108,10 +111,15 @@ export async function buildServer(options: BuildServerOptions = {}): Promise<Fas
 
   registerAuthMiddleware(app, { db, authService, today });
 
+  // Shared context for the pod services: every time-boxed rule resolves
+  // "today" through the same injected clock.
+  const podContext = (): PodServiceContext => ({ db, bus, today });
+
   registerHealthRoutes(app, { db });
   registerAuthRoutes(app, { authService, db });
   registerMeRoutes(app, { db, today });
-  registerPodRoutes(app, { db });
+  registerCalendarRoutes(app, { db, today, podContext });
+  registerPodRoutes(app, { db, today, podContext });
 
   app.setNotFoundHandler((request, reply) => {
     void reply.code(404).send({
@@ -122,6 +130,19 @@ export async function buildServer(options: BuildServerOptions = {}): Promise<Fas
   });
 
   app.setErrorHandler((error: FastifyError, request, reply) => {
+    // A time-boxed action attempted outside its calendar window: 409 Conflict,
+    // with the day and the allowed range so the UI can explain itself.
+    if (error instanceof WindowClosedError) {
+      return reply.code(409).send({
+        error: 'window_closed',
+        message: error.message,
+        action: error.action,
+        cycleDay: error.day,
+        allowedDays: error.allowedDays,
+        requestId: request.id,
+      });
+    }
+
     if (error instanceof AuthError) {
       return reply.code(error.statusCode).send({
         error: error.code,

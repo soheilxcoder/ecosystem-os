@@ -52,6 +52,12 @@ export async function expectDbError(
   throw new Error('Expected the database operation to fail, but it succeeded');
 }
 
+export interface TestWorld {
+  db: Database;
+  world: import('../helpers/fixtures').FixtureWorld;
+  today: string;
+}
+
 /** Deterministic UUID generator for tests that need stable ids. */
 export function uuidFactory(prefix = 'test'): () => string {
   let n = 0;

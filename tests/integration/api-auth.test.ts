@@ -261,7 +261,11 @@ describe('authorization through the API', () => {
     });
     expect(response.statusCode).toBe(200);
     const members = response.json<{ data: Array<{ fullName: string }> }>().data;
-    expect(members.map((m) => m.fullName).sort()).toEqual(['Lena Lead', 'Mo Member']);
+    expect(members.map((m) => m.fullName).sort()).toEqual([
+      'Lena Lead',
+      'Mo Member',
+      'Nadia Nine',
+    ]);
   });
 });
 
