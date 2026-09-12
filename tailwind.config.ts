@@ -16,6 +16,11 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // 480px: the width at which the Cycle Wheel must degrade to the linear
+      // Pipeline bar (12-DESIGN-SYSTEM.md §4).
+      screens: {
+        xs: '480px',
+      },
       colors: {
         ink: {
           950: '#12161C', // primary text / high-emphasis headings

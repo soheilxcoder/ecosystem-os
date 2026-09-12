@@ -159,14 +159,25 @@ Built in the order dictated by `14-ROADMAP-FOR-AGENT.md`.
 | Phase | Scope | Status |
 |---|---|---|
 | **0** | Foundations: schema, auth + `authorize()`, event bus, design tokens, base components, shell | ✅ done |
-| 1 | Pods & Teams (03) + Sprint Calendar (06) | ⏳ next |
-| 2 | CLOU Agreements (04) | ⬜ |
+| **1** | Pods & Teams (03) + Sprint Calendar (06) | ✅ done |
+| 2 | CLOU Agreements (04) | ⏳ next |
 | 3 | Peer Review & Governance (08) | ⬜ |
 | 4 | Internal Budget Market (05) | ⬜ |
 | 5 | Coaching (07) | ⬜ |
 | 6 | Notifications (11) + Archive (10) | ⬜ |
 | 7 | Strategic Hub / Admin Console (09) | ⬜ |
 | 8 | Hardening: accessibility pass, security review, load test, correction records | ⬜ |
+
+### Phase 1 — definition of done
+
+- [x] Pod overview (members, Pod Lead panel with rotation countdown and history, priorities, check-in log, pitch panel)
+- [x] Pod Lead rotation + voting, with the tie-break rule shown in the modal
+- [x] Weekly check-ins during Days 4–80, with the at-risk flag
+- [x] Pitch editor with the exact Day 81–85 window, auto-submit warning from Day 84, and read-only view after submission
+- [x] **Server rejects a submission attempt outside Days 81–85** — verified through the API, not just a disabled button (`window_closed`, HTTP 409)
+- [x] Org-wide and per-pod calendar: Cycle Wheel (SVG) with a linear fallback under 480px, milestones with `.ics`, pause days shown to everyone
+- [x] Shared `getCurrentPhase()` service, with pause-day handling and the "changes apply next cycle only" rule
+- [x] Pod history timeline with CSV export
 
 ### Phase 0 — definition of done
 
@@ -176,6 +187,15 @@ Built in the order dictated by `14-ROADMAP-FOR-AGENT.md`.
 - [x] Design tokens as CSS variables + Tailwind config, and the base component shells (Data Card, Status Chip, Rotation Badge) built and reviewed
 - [x] A user can log in and see the sidebar shell from 01-INFORMATION-ARCHITECTURE.md §1
 - [x] Base components render correctly at 1440 / 768 / 375 — via `/design-system`; see the note below
+
+### Troubleshooting
+
+**`Could not open the embedded PostgreSQL database` on startup.** Only one
+process can hold the PGlite data directory at a time, and a process killed with
+`SIGKILL` can leave a stale lock behind. Stop any other API process, then either
+remove `.data/pgdata/postmaster.pid` or run `npm run db:reset` (which recreates
+the local demo database). Always stop the API with `Ctrl-C` / `SIGTERM` so it
+closes the database cleanly.
 
 ### Known deviations
 

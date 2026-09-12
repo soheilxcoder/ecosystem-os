@@ -27,6 +27,7 @@ import { registerMeRoutes } from './routes/me';
 import { registerCalendarRoutes } from './routes/calendar';
 import { registerPodRoutes } from './routes/pods';
 import type { PodServiceContext } from './services/pods';
+import { startScheduler } from './jobs/scheduler';
 
 export interface ServerContext {
   db: Database;
@@ -200,8 +201,17 @@ async function start(): Promise<void> {
     process.exit(1);
   }
 
+  // Background sweeps (auto-submit at the Day-85 deadline). Skipped in tests.
+  const scheduler =
+    env.NODE_ENV === 'test'
+      ? null
+      : startScheduler({ db: app.context.db, bus: app.context.bus, today: app.context.today });
+
   const shutdown = async (signal: string) => {
     console.log(`[api] ${signal} received, shutting down`);
+    scheduler?.stop();
+    // Close cleanly so the embedded database is left in a consistent state —
+    // killing the process can leave it needing `npm run db:reset`.
     await app.close();
     process.exit(0);
   };

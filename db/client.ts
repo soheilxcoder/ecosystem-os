@@ -53,6 +53,11 @@ export async function createDatabase(config: DatabaseConfig = {}): Promise<Datab
   return createPgliteDatabase(config.dataDir ?? '.data/pgdata');
 }
 
+type PGliteTransaction = {
+  query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; affectedRows?: number }>;
+  exec: (sql: string) => Promise<unknown>;
+};
+
 async function createPgliteDatabase(dataDir: string): Promise<Database> {
   const { PGlite } = await import('@electric-sql/pglite');
 
@@ -62,7 +67,20 @@ async function createPgliteDatabase(dataDir: string): Promise<Database> {
     await mkdir(dataDir, { recursive: true });
   }
 
-  const pg = dataDir === ':memory:' ? await PGlite.create() : await PGlite.create({ dataDir });
+  let pg: Awaited<ReturnType<typeof PGlite.create>>;
+  try {
+    pg = dataDir === ':memory:' ? await PGlite.create() : await PGlite.create({ dataDir });
+  } catch (error) {
+    throw new Error(
+      `Could not open the embedded PostgreSQL database at "${dataDir}".\n` +
+        'This usually means another process is already using it, or a previous run was ' +
+        'killed and left a stale lock file behind.\n' +
+        `  - stop any other API process, then: rm -f ${dataDir}/postmaster.pid\n` +
+        '  - or recreate the local database entirely: npm run db:reset\n' +
+        `Original error: ${(error as Error).message}`,
+      { cause: error },
+    );
+  }
 
   const wrap = (target: {
     query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; affectedRows?: number }>;
@@ -84,7 +102,7 @@ async function createPgliteDatabase(dataDir: string): Promise<Database> {
     query: base.query,
     exec: base.exec,
     async transaction<T>(fn: (tx: Queryable) => Promise<T>): Promise<T> {
-      return pg.transaction(async (tx) => fn(wrap(tx))) as Promise<T>;
+      return pg.transaction(async (tx: PGliteTransaction) => fn(wrap(tx))) as Promise<T>;
     },
     async close() {
       await pg.close();
