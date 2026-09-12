@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Design tokens — 12-DESIGN-SYSTEM.md §2.
+ * Declared once here as custom properties and mapped into Tailwind by
+ * tailwind.config.ts, so the hand-built SVG components (Cycle Wheel, Rotation
+ * Badge) and utility classes can never drift apart.
+ */
+:root {
+  --ink-950: #12161c;
+  --ink-700: #2a313a;
+  --paper-100: #f7f8f6;
+  --slate-500: #5b6672;
+  --slate-300: #98a1ac;
+  --signal-600: #1e6f5c;
+  --signal-700: #175a4b;
+  --signal-200: #c6ded6;
+  --signal-50: #edf5f2;
+  --surface-white: #ffffff;
+  --line-200: #e3e6e2;
+  --line-300: #cfd4ce;
+
+  --status-neutral: #8b93a1;
+  --status-active: #2b6cb0;
+  --status-good: #1e7a4c;
+  --status-watch: #b7791f;
+  --status-alert: #b23b3b;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--paper-100);
+    color: var(--ink-950);
+    font-feature-settings: 'cv05' 1;
+  }
+
+  /*
+   * Tabular numerals everywhere: this product displays columns of scores and
+   * budgets, and misaligned digits undermine the precision the design is built
+   * on (12-DESIGN-SYSTEM.md §2 "Type").
+   */
+  table,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Visible keyboard focus on every interactive element (§6). */
+  :focus-visible {
+    outline: 2px solid var(--signal-600);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Numbers are links to their own provenance, not inert text. */
+  a {
+    color: inherit;
+  }
+}
+
+@layer components {
+  /*
+   * Primary data card: 1px hairline border, no shadow, 2px left status border.
+   * Reads as a ledger line item rather than a floating SaaS card (§2).
+   */
+  .data-card {
+    border: 1px solid var(--line-200);
+    border-left: 2px solid var(--status-neutral);
+    background-color: var(--surface-white);
+  }
+
+  /* Secondary / navigational card — the only place a shadow is allowed. */
+  .nav-card {
+    border: 1px solid var(--line-200);
+    box-shadow:
+      0 1px 2px 0 rgb(18 22 28 / 0.06),
+      0 1px 3px 0 rgb(18 22 28 / 0.08);
+  }
+
+  .skeleton {
+    background-color: color-mix(in srgb, var(--line-200) 70%, white);
+    border-radius: 2px;
+  }
+}
+
+/*
+ * "One motion moment per major screen" (§2.4) is disabled outright for users
+ * who ask for reduced motion (§6).
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
