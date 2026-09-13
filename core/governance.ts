@@ -10,6 +10,8 @@
  * a pod is on — so a screen cannot accidentally render the wrong one.
  */
 
+import { BUDGET_FORMULA_WEIGHTS } from './budget';
+
 import type { PodStatus, UUID } from './types';
 
 export type GovernanceTrack = 'entry_trial' | 'accountability' | 'none';
@@ -144,9 +146,9 @@ export const RULE_REGISTRY: Record<RuleKey, RuleDefinition> = {
     key: 'budget.formula_weights',
     label: 'Budget formula weights (financial / peer review / strategic, in %)',
     source: 'recorded',
-    // The constitutional 40/35/25 split, in whole percentages so it reads the
-    // same way on the budget screen as it does in the appendix.
-    defaultValue: { financial: 40, peer_review: 35, strategic: 25 },
+    // The constitutional 40/35/25 split — imported from the budget module so
+    // the rule panel, the formula and the budget screen cannot drift apart.
+    defaultValue: { ...BUDGET_FORMULA_WEIGHTS },
   },
 };
 
