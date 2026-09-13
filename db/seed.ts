@@ -18,6 +18,27 @@ import { createHolding, createOrg, createUser } from './repositories/users';
 import { addPodMember, createCheckin, createPod, createPodLeadTerm } from './repositories/pods';
 import { assignRole } from './repositories/roles';
 import { createCycleConfig, upsertGovernanceConfig } from './repositories/calendar';
+import { insertOne, queryOne } from './client';
+import {
+  addConflictCaseEvent,
+  assignReview,
+  createConflictCase,
+  listInsiderUserIds,
+  listPeerValidatorUserIds,
+  listTradingPartnerUserIds,
+} from './repositories/review';
+import {
+  addPanelMember,
+  createAccountabilityCase,
+  getGovernanceSettings,
+  createEntryTrial,
+  markReductionApplied,
+  setAccountabilityStage,
+  setTrialRepresentative,
+  updateGovernanceSettings,
+} from './repositories/governance';
+import { selectReviewers } from '../core/peer-review';
+import { entryDecisionDueDate } from '../core/entry-trial';
 import { createAgreement, insertAgreementEvent } from './repositories/agreements';
 import type { CloudTerms } from '../core/types';
 import { startCycle } from '../server/services/calendar';
@@ -396,6 +417,191 @@ async function main(): Promise<void> {
       'The launch data is under investor embargo until the next cycle',
     );
 
+    // -----------------------------------------------------------------------
+    // Peer review & governance (Module 08)
+    //
+    // Seeded so each of the three workflows has something real on screen:
+    // a review queue with an assigned panel, a conflict case mid-mediation, a
+    // trial unit counting down to Day 90, and an established pod at stage 4
+    // with its panel constituted. The two tracks are seeded on two different
+    // pods on purpose — the model forbids one pod being on both.
+    // -----------------------------------------------------------------------
+
+    // Peer Validator seats, each scoped to the pod the validator sits in. The
+    // scope matters: it is what the permission check names, and it is what the
+    // assignment rule reads when it excludes a reviewer's own pod, their
+    // coach's pod, and any pod they trade with.
+    for (const [userId, podScope] of [
+      [mo, atlas.id],
+      [petra, basalt.id],
+      [quinn, basalt.id],
+      [sam, dune.id],
+      [hana, ember.id],
+    ] as Array<[UUID, UUID]>) {
+      await role(userId, 'peer_validator', 'pod', podScope, addDays(TODAY, -120));
+    }
+
+    // The Conflict Resolver seat: a neutral senior seat, held here by the
+    // Coaching Hub lead rather than by anyone in the two pods involved.
+    await role(cass, 'conflict_resolver', 'org', null, addDays(TODAY, -200));
+
+    await updateGovernanceSettings(
+      db,
+      org.id,
+      {
+        accountabilityStage2ScoreThreshold: 50,
+        accountabilityPanelSize: 3,
+        accountabilityCorrectionDays: 30,
+        reviewReviewersPerPitch: 2,
+      },
+      ari,
+    );
+
+    // --- Track 1: Pod Cinder is a trial unit, 35 days into its 90 ------------
+    const trialStart = addDays(TODAY, -35);
+    const cinderTrial = await createEntryTrial(db, {
+      orgId: org.id,
+      podId: cinder.id,
+      startDate: trialStart,
+      decisionDueDate: entryDecisionDueDate(trialStart),
+      criteria: [
+        { label: 'Completed at least one full pitch cycle', met: true },
+        { label: 'Financial data successfully integrated', met: true },
+        { label: 'No unresolved conflict cases', met: false },
+        { label: 'Signed at least one CLOU with another pod', met: null },
+      ],
+    });
+    // The pod's representative is whoever holds the Pod Lead seat today; the
+    // hub's is the Deployment Hub.
+    await setTrialRepresentative(db, cinderTrial.id, 'pod', rana);
+    await setTrialRepresentative(db, cinderTrial.id, 'hub', dan);
+
+    // --- Track 2: Pod Ember is at stage 4, with its panel constituted -------
+    const emberCase = await createAccountabilityCase(db, { orgId: org.id, podId: ember.id });
+    await setAccountabilityStage(db, emberCase.id, 'reduced_share', {
+      triggerStage2At: new Date().toISOString(),
+    });
+    await markReductionApplied(db, emberCase.id);
+    await setAccountabilityStage(db, emberCase.id, 'mediation');
+    await setAccountabilityStage(db, emberCase.id, 'correction_period', {
+      correctionStartDate: addDays(TODAY, -12),
+      correctionEndDate: addDays(TODAY, 18),
+      assignedCoachUserId: cora,
+    });
+
+    // The panel: three peers, never the pod under review.
+    for (const [userId, label] of [
+      [lena, 'Peer Pod Lead — Pod Atlas'],
+      [omar, 'Peer Pod Lead — Pod Basalt'],
+      [sam, 'Peer Pod Lead — Pod Dune'],
+    ] as Array<[UUID, string]>) {
+      await addPanelMember(db, emberCase.id, userId, label);
+    }
+
+    // A dispute between two pods that actually trade with each other.
+    const qaCase = await createConflictCase(db, {
+      orgId: org.id,
+      podAId: atlas.id,
+      podBId: basalt.id,
+      resolverUserId: cass,
+      subject: 'Who owns the shared QA queue?',
+    });
+    await addConflictCaseEvent(db, {
+      caseId: qaCase.id,
+      authorUserId: null,
+      authorRole: 'system',
+      body: `Case opened between Pod Atlas and Pod Basalt.`,
+    });
+    await addConflictCaseEvent(db, {
+      caseId: qaCase.id,
+      authorUserId: lena,
+      authorRole: 'pod_a',
+      body: 'The queue blocks our release train two days a week; we assumed Basalt owned it.',
+    });
+    await addConflictCaseEvent(db, {
+      caseId: qaCase.id,
+      authorUserId: omar,
+      authorRole: 'pod_b',
+      body: 'We only ever triaged it as a favour. It is not in any of our agreements.',
+    });
+    await addConflictCaseEvent(db, {
+      caseId: qaCase.id,
+      authorUserId: cass,
+      authorRole: 'resolver',
+      body: 'Neither CLOU mentions the QA queue, so this is a gap rather than a breach. Proposing a split by service once both pods confirm their release cadence.',
+    });
+
+    // --- Peer review: submitted pitches, panels assigned impartially --------
+    const pitches: Array<[UUID, UUID, string]> = [
+      [atlas.id, lena, 'Two enterprise pilots signed; expanding the outbound team.'],
+      [basalt.id, omar, 'Changeover completed ahead of plan; next is the second line.'],
+      [cinder.id, rana, 'First full cycle delivered; financial integration is live.'],
+      [dune.id, sam, 'Onboarding playbook rewritten and handed to two new pods.'],
+      [ember.id, hana, 'Growth experiments running; two channels show real traction.'],
+    ];
+
+    const validators = await listPeerValidatorUserIds(db, org.id, TODAY);
+    const reviewersPerPitch = (await getGovernanceSettings(db, org.id)).reviewReviewersPerPitch;
+
+    for (const [index, [podId, submittedBy, nextPlan]] of pitches.entries()) {
+      const pitch = await insertOne<{ id: UUID }>(
+        db,
+        `INSERT INTO pitch (pod_id, cycle_id, status, previous_summary, next_plan, submitted_at, submitted_by)
+         VALUES ($1, $2, 'submitted', $3, $4, now(), $5)
+         RETURNING id`,
+        [
+          podId,
+          cycle.id,
+          'Delivered what we committed to last cycle.',
+          nextPlan,
+          submittedBy,
+        ],
+      );
+
+      const insiders = await listInsiderUserIds(db, podId, TODAY);
+      const partners = await listTradingPartnerUserIds(db, podId);
+      // The seed rotates with the cycle *and* the pitch, so the same two people
+      // do not end up reviewing every pod in the demo.
+      const panel = selectReviewers({
+        candidateUserIds: validators,
+        excludedUserIds: [...new Set([...insiders, ...partners])],
+        count: reviewersPerPitch,
+        seed: cycle.cycleNumber * 7 + index,
+      });
+      for (const reviewerUserId of panel) {
+        await assignReview(db, { cycleId: cycle.id, pitchId: pitch.id, reviewerUserId });
+      }
+    }
+
+    // One review already submitted, so the queue shows the difference between
+    // "in progress" and "submitted" — and the comments the pod receives.
+    const atlasPitch = await queryOne<{ id: UUID }>(
+      db,
+      'SELECT id FROM pitch WHERE pod_id = $1 AND cycle_id = $2',
+      [atlas.id, cycle.id],
+    );
+    if (atlasPitch) {
+      const review = await queryOne<{ id: UUID }>(
+        db,
+        'SELECT id FROM peer_review WHERE pitch_id = $1 LIMIT 1',
+        [atlasPitch.id],
+      );
+      if (review) {
+        await db.query(
+          `UPDATE peer_review
+              SET score = 74, comments = $2, submitted_at = now()
+            WHERE id = $1`,
+          [
+            review.id,
+            'Both targets were met and the evidence is easy to follow in the dashboard. ' +
+              'The one miss — the second enterprise pilot slipped a cycle — was flagged by the pod ' +
+              'itself rather than buried, which is worth more than a clean-looking report. ' +
+              'The next plan is realistic about capacity: one hire, one channel.',
+          ],
+        );
+      }
+    }
+
     // Noor has no role assignments: the platform must render a truthful
     // "no active role" empty state rather than letting her act anywhere.
 
@@ -415,6 +621,8 @@ async function main(): Promise<void> {
     );
     console.log('[seed]   Pod Dune and Pod Ember have no agreement in force — the network graph');
     console.log('[seed]   draws them connected only through the shared platform hub.');
+    console.log('[seed]   governance: Cinder on the 90-Day Entry Rule (day 35), Ember at stage 4');
+    console.log('[seed]   with its panel constituted; one conflict case open for cass@example.org.');
     console.log('[seed] sign in with any @example.org address, e.g. lena@example.org (Pod Lead, Atlas)');
     console.log('[seed]   rana@example.org has two proposals waiting in the CLOU inbox.');
   } finally {

@@ -27,8 +27,11 @@ import { registerMeRoutes } from './routes/me';
 import { registerCalendarRoutes } from './routes/calendar';
 import { registerPodRoutes } from './routes/pods';
 import { registerAgreementRoutes } from './routes/agreements';
+import { registerReviewRoutes } from './routes/review';
 import type { PodServiceContext } from './services/pods';
 import type { AgreementServiceContext } from './services/agreements';
+import type { ReviewServiceContext } from './services/review';
+import type { GovernanceServiceContext } from './services/governance';
 import { startScheduler } from './jobs/scheduler';
 
 export interface ServerContext {
@@ -118,6 +121,8 @@ export async function buildServer(options: BuildServerOptions = {}): Promise<Fas
   // "today" through the same injected clock.
   const podContext = (): PodServiceContext => ({ db, bus, today });
   const agreementContext = (): AgreementServiceContext => ({ db, bus, today });
+  const reviewContext = (): ReviewServiceContext => ({ db, bus, today });
+  const governanceContext = (): GovernanceServiceContext => ({ db, bus, today });
 
   registerHealthRoutes(app, { db });
   registerAuthRoutes(app, { authService, db });
@@ -125,6 +130,7 @@ export async function buildServer(options: BuildServerOptions = {}): Promise<Fas
   registerCalendarRoutes(app, { db, today, podContext });
   registerPodRoutes(app, { db, today, podContext });
   registerAgreementRoutes(app, { db, today, agreementContext });
+  registerReviewRoutes(app, { db, today, reviewContext, governanceContext });
 
   app.setNotFoundHandler((request, reply) => {
     void reply.code(404).send({

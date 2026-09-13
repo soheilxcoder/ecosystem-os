@@ -9,6 +9,7 @@
 
 import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
+import { resolveSessionSecret } from '../core/constants';
 
 export const SESSION_COOKIE = 'eco_session';
 
@@ -19,12 +20,13 @@ export interface WebSession {
   org: string;
 }
 
+/**
+ * The same resolved secret the API signs with (`core/constants`), so a freshly
+ * cloned checkout works without a `.env` file in development and still refuses
+ * to start in production without a real one.
+ */
 function secret(): Uint8Array {
-  const value = process.env.SESSION_SECRET;
-  if (!value || value.length < 16) {
-    throw new Error('SESSION_SECRET must be set (at least 16 characters)');
-  }
-  return new TextEncoder().encode(value);
+  return new TextEncoder().encode(resolveSessionSecret());
 }
 
 export async function getSessionToken(): Promise<string | null> {

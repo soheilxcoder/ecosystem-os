@@ -54,6 +54,7 @@ export const ACTIONS = [
   'case.view',
   'case.log_mediation',
   'case.recommend',
+  'governance.view_track',
   'governance.advance_stage',
   'governance.panel_vote',
   'governance.entry_decision',
@@ -128,7 +129,11 @@ export const ROLE_SCOPES: Record<RoleType, readonly ScopeType[]> = {
   pod_member: ['pod'],
   pod_lead: ['pod'],
   peer_validator: ['cycle', 'pod'],
-  conflict_resolver: ['case'],
+  // A resolver is appointed per case, but the seat itself is granted for the
+  // organisation: a case cannot exist before someone opens it, so "may act on
+  // this specific case" is enforced by `conflict_case.resolver_user_id` rather
+  // than by a case-scoped role row.
+  conflict_resolver: ['case', 'org'],
   coach: ['pod'],
   hub_architecture: ['org'],
   hub_deployment: ['org'],
@@ -182,6 +187,12 @@ export const PERMISSION_MATRIX: Record<Action, PermissionRule> = {
   'case.view': { roles: ['conflict_resolver'] },
   'case.log_mediation': { roles: ['conflict_resolver'] },
   'case.recommend': { roles: ['conflict_resolver'] },
+  // Reading a pod's governance track is org-wide: the dashboards already are,
+  // and a pod is entitled to see the clock that decides its own future.
+  'governance.view_track': {
+    roles: ['pod_member', 'pod_lead', 'coach', 'hub_deployment', 'hub_architecture'],
+    orgWide: true,
+  },
   'governance.advance_stage': { roles: ['coach', 'hub_deployment'] },
   'governance.panel_vote': { roles: ['pod_member', 'pod_lead'] },
   'governance.entry_decision': { roles: ['hub_deployment', 'pod_lead'] },

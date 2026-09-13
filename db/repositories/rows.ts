@@ -148,6 +148,116 @@ export function toCloudArchiveConfirmation(
   };
 }
 
+export function toPeerReview(row: any): import('../../core/types').PeerReview {
+  return {
+    id: row.id,
+    cycleId: row.cycle_id,
+    pitchId: row.pitch_id,
+    reviewerUserId: row.reviewer_user_id,
+    score: row.score === null || row.score === undefined ? null : Number(row.score),
+    rubricAnswers: (row.rubric_answers ?? {}) as Record<string, string | number>,
+    comments: row.comments ?? null,
+    submittedAt: row.submitted_at ? (row.submitted_at.toISOString?.() ?? row.submitted_at) : null,
+    assignedAt: row.assigned_at?.toISOString?.() ?? row.assigned_at,
+  };
+}
+
+export function toConflictCase(row: any): import('../../core/types').ConflictCase {
+  return {
+    id: row.id,
+    orgId: row.org_id,
+    podAId: row.pod_a_id,
+    podBId: row.pod_b_id,
+    resolverUserId: row.resolver_user_id,
+    subject: row.subject,
+    status: row.status,
+    recommendationText: row.recommendation_text ?? null,
+    escalatedToRuleReview: Boolean(row.escalated_to_rule_review),
+    openedAt: row.opened_at?.toISOString?.() ?? row.opened_at,
+    closedAt: row.closed_at ? (row.closed_at.toISOString?.() ?? row.closed_at) : null,
+  };
+}
+
+export function toConflictCaseEvent(row: any): import('../../core/types').ConflictCaseEvent {
+  return {
+    id: row.id,
+    caseId: row.case_id,
+    authorUserId: row.author_user_id ?? null,
+    authorRole: row.author_role,
+    body: row.body,
+    createdAt: row.created_at?.toISOString?.() ?? row.created_at,
+  };
+}
+
+export function toEntryTrial(row: any): import('../../core/types').EntryTrial {
+  return {
+    id: row.id,
+    orgId: row.org_id,
+    podId: row.pod_id,
+    startDate: toDateString(row.start_date),
+    decisionDueDate: toDateString(row.decision_due_date),
+    criteria: (row.criteria ?? []) as import('../../core/types').TrialCriterionRow[],
+    podRepUserId: row.pod_rep_user_id ?? null,
+    podRepRecommendation: row.pod_rep_recommendation ?? null,
+    deploymentHubUserId: row.deployment_hub_user_id ?? null,
+    deploymentHubRecommendation: row.deployment_hub_recommendation ?? null,
+    finalResult: row.final_result ?? null,
+    decidedAt: row.decided_at ? (row.decided_at.toISOString?.() ?? row.decided_at) : null,
+    createdAt: row.created_at?.toISOString?.() ?? row.created_at,
+  };
+}
+
+export function toAccountabilityCase(
+  row: any,
+): import('../../core/types').AccountabilityCase {
+  return {
+    id: row.id,
+    orgId: row.org_id,
+    podId: row.pod_id,
+    currentStage: row.current_stage,
+    stage2TriggeredAt: row.stage_2_triggered_at
+      ? (row.stage_2_triggered_at.toISOString?.() ?? row.stage_2_triggered_at)
+      : null,
+    reductionApplied: Boolean(row.reduction_applied),
+    correctionStartDate: optionalDate(row.correction_start_date),
+    correctionEndDate: optionalDate(row.correction_end_date),
+    assignedCoachUserId: row.assigned_coach_user_id ?? null,
+    conflictCaseId: row.conflict_case_id ?? null,
+    finalResult: row.final_result ?? null,
+    decidedAt: row.decided_at ? (row.decided_at.toISOString?.() ?? row.decided_at) : null,
+    openedAt: row.opened_at?.toISOString?.() ?? row.opened_at,
+  };
+}
+
+export function toPanelMember(row: any): import('../../core/types').PanelMember {
+  return {
+    id: row.id,
+    caseId: row.case_id,
+    userId: row.user_id,
+    roleLabel: row.role_label ?? 'Panel member',
+    vote: row.vote ?? null,
+    comment: row.comment ?? null,
+    votedAt: row.voted_at ? (row.voted_at.toISOString?.() ?? row.voted_at) : null,
+    createdAt: row.created_at?.toISOString?.() ?? row.created_at,
+  };
+}
+
+export function toRuleChange(row: any): import('../../core/types').RuleChange {
+  return {
+    id: row.id,
+    orgId: row.org_id,
+    ruleName: row.rule_name,
+    oldValue: row.old_value ?? null,
+    newValue: row.new_value ?? null,
+    proposedBy: row.proposed_by ?? null,
+    justification: row.justification,
+    effectiveCycleId: row.effective_cycle_id ?? null,
+    effectiveCycleNumber: Number(row.effective_cycle_number ?? 1),
+    approvedAt: row.approved_at ? (row.approved_at.toISOString?.() ?? row.approved_at) : null,
+    createdAt: row.created_at?.toISOString?.() ?? row.created_at,
+  };
+}
+
 function optionalDate(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   return toDateString(value);

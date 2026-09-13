@@ -200,6 +200,137 @@ export interface CloudArchiveConfirmation {
   createdAt: string;
 }
 
+// --- Peer review & governance (Module 08) -----------------------------------
+
+export type ReviewStatus = 'not_started' | 'in_progress' | 'submitted';
+
+export interface PeerReview {
+  id: UUID;
+  cycleId: UUID;
+  pitchId: UUID;
+  reviewerUserId: UUID;
+  score: number | null;
+  rubricAnswers: Record<string, string | number>;
+  comments: string | null;
+  submittedAt: string | null;
+  assignedAt: string;
+}
+
+export const CONFLICT_CASE_STATUSES = ['open', 'resolved', 'escalated'] as const;
+export type ConflictCaseStatus = (typeof CONFLICT_CASE_STATUSES)[number];
+
+export const CASE_AUTHOR_ROLES = ['resolver', 'pod_a', 'pod_b', 'system'] as const;
+export type CaseAuthorRole = (typeof CASE_AUTHOR_ROLES)[number];
+
+export interface ConflictCase {
+  id: UUID;
+  orgId: UUID;
+  podAId: UUID;
+  podBId: UUID;
+  resolverUserId: UUID;
+  subject: string;
+  status: ConflictCaseStatus;
+  recommendationText: string | null;
+  escalatedToRuleReview: boolean;
+  openedAt: string;
+  closedAt: string | null;
+}
+
+export interface ConflictCaseEvent {
+  id: UUID;
+  caseId: UUID;
+  authorUserId: UUID | null;
+  authorRole: CaseAuthorRole;
+  body: string;
+  createdAt: string;
+}
+
+// --- Track 1: 90-Day Entry Rule ---------------------------------------------
+
+export interface TrialCriterionRow {
+  label: string;
+  met: boolean | null;
+}
+
+export const ENTRY_RESULTS = ['full_entry', 'discontinued'] as const;
+export type EntryResult = (typeof ENTRY_RESULTS)[number];
+
+export const ENTRY_RECOMMENDATIONS = ['join', 'discontinue'] as const;
+export type EntryRecommendation = (typeof ENTRY_RECOMMENDATIONS)[number];
+
+export interface EntryTrial {
+  id: UUID;
+  orgId: UUID;
+  podId: UUID;
+  startDate: ISODate;
+  decisionDueDate: ISODate;
+  criteria: TrialCriterionRow[];
+  podRepUserId: UUID | null;
+  podRepRecommendation: EntryRecommendation | null;
+  deploymentHubUserId: UUID | null;
+  deploymentHubRecommendation: EntryRecommendation | null;
+  finalResult: EntryResult | null;
+  decidedAt: string | null;
+  createdAt: string;
+}
+
+// --- Track 2: Accountability & Dissolution Path ------------------------------
+
+export const ACCOUNTABILITY_STAGE_VALUES = [
+  'transparency',
+  'reduced_share',
+  'mediation',
+  'correction_period',
+] as const;
+export type AccountabilityStageValue = (typeof ACCOUNTABILITY_STAGE_VALUES)[number];
+
+export const PANEL_VOTES = ['continue', 'dissolve'] as const;
+export type PanelVoteValue = (typeof PANEL_VOTES)[number];
+
+export const ACCOUNTABILITY_RESULTS = ['continue', 'dissolve'] as const;
+export type AccountabilityResult = (typeof ACCOUNTABILITY_RESULTS)[number];
+
+export interface AccountabilityCase {
+  id: UUID;
+  orgId: UUID;
+  podId: UUID;
+  currentStage: AccountabilityStageValue;
+  stage2TriggeredAt: string | null;
+  reductionApplied: boolean;
+  correctionStartDate: ISODate | null;
+  correctionEndDate: ISODate | null;
+  assignedCoachUserId: UUID | null;
+  conflictCaseId: UUID | null;
+  finalResult: AccountabilityResult | null;
+  decidedAt: string | null;
+  openedAt: string;
+}
+
+export interface PanelMember {
+  id: UUID;
+  caseId: UUID;
+  userId: UUID;
+  roleLabel: string;
+  vote: PanelVoteValue | null;
+  comment: string | null;
+  votedAt: string | null;
+  createdAt: string;
+}
+
+export interface RuleChange {
+  id: UUID;
+  orgId: UUID;
+  ruleName: string;
+  oldValue: unknown;
+  newValue: unknown;
+  proposedBy: UUID | null;
+  justification: string;
+  effectiveCycleId: UUID | null;
+  effectiveCycleNumber: number;
+  approvedAt: string | null;
+  createdAt: string;
+}
+
 /** Append-only security/technical audit trail (13-TECHNICAL-ARCHITECTURE.md §6). */
 export interface AuditLogEntry {
   id: UUID;

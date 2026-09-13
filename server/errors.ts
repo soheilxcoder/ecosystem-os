@@ -22,3 +22,10 @@ export const notFound = (message = 'Not found'): HttpError => httpError(404, mes
 
 export const badRequest = (message: string, code = 'invalid_request'): HttpError =>
   httpError(400, message, code);
+
+/**
+ * 409 — the request is well-formed but contradicts a rule (a window is closed,
+ * a pod is on the wrong governance track, a decision is already final).
+ */
+export const conflict = (message: string, code = 'conflict'): HttpError =>
+  httpError(409, message, code);

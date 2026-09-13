@@ -23,6 +23,8 @@ export async function truncateAll(db: Database): Promise<void> {
       domain_event, audit_log,
       cloud_agreement_archive_confirmation, cloud_agreement_event, cloud_agreement,
       weekly_checkin, pitch, pod_lead_vote, pod_lead_term, pod_cycle_plan,
+      accountability_panel_member, accountability_case, entry_trial,
+      conflict_case_event, conflict_case, peer_review, rule_change,
       cycle_milestone_reminder, sprint_cycle, cycle_config, org_governance_config,
       pod_membership, pod, role_assignment, app_user, holding, org
     RESTART IDENTITY CASCADE;

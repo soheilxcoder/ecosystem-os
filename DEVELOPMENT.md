@@ -167,12 +167,57 @@ Built in the order dictated by `14-ROADMAP-FOR-AGENT.md`.
 | **0** | Foundations: schema, auth + `authorize()`, event bus, design tokens, base components, shell | ✅ done |
 | **1** | Pods & Teams (03) + Sprint Calendar (06) | ✅ done |
 | **2** | CLOU Agreements (04) | ✅ done |
-| 3 | Peer Review & Governance (08) | ⬜ |
+| **3** | Peer Review & Governance (08) | ✅ done |
 | 4 | Internal Budget Market (05) | ⬜ |
 | 5 | Coaching (07) | ⬜ |
 | 6 | Notifications (11) + Archive (10) | ⬜ |
 | 7 | Strategic Hub / Admin Console (09) | ⬜ |
 | 8 | Hardening: accessibility pass, security review, load test, correction records | ⬜ |
+
+### Phase 3 — definition of done
+
+- [x] **Three workflows, three surfaces.** Peer Review (`/review/queue`), Conflict
+      Resolution (`/review/cases`) and the two governance tracks
+      (`/review/entry/[podId]`, `/review/accountability/[podId]`) are separate
+      screens with separate state machines; no component or enum is shared
+      between the tracks, and each screen carries a cross-reference banner to
+      the other one.
+- [x] **90-Day Entry Rule** for pods in trial: a linear Day 0 → Day 90 bar with
+      no intermediate correction stages. At Day 90 a **bilateral** decision is
+      recorded (pod representative + Deployment Hub); failure discontinues the
+      unit immediately with the hardcoded copy "no correction period applies
+      (Entry Rule)". Seeded example: Pod Cinder, day 35, decision due 6 Nov 2026.
+- [x] **Accountability & Dissolution Path** for established pods: four
+      sequential stages (transparency → reduced credibility & profit share →
+      mediation → 30-day correction period ending in a **panel vote**). Stage 2
+      is data-triggered by the configured threshold and writes a *visible
+      adjustment record* into the budget calculation — never an off-the-books
+      cut. Seeded example: Pod Ember, stage 4, panel of three peer Pod Leads.
+- [x] **Panel vote, never a single decision-maker.** Dissolution needs a
+      majority against continuing and a quorum of ⌊n/2⌋+1; the tally only
+      finalizes once the outcome is mathematically certain, so a hung panel
+      keeps the pod. Verified end to end through the real form POST: with
+      2 continue / 0 dissolve and one vote outstanding the case closed itself
+      as `continue`, immutably.
+- [x] **Immutability.** `entry_trial.final_result` and
+      `accountability_case.final_result` are set once; corrections are new
+      records referring to the original (DB constraints + tests).
+- [x] **Impartial assignment.** Reviewers are drawn from validators who are not
+      members of the target pod, not the target pod's coach, and not members of
+      any pod trading with the target under an active CLOU; the draw is
+      deterministic per cycle and rotates one seat. Seeded check: 5 pitches ×
+      2 reviewers, zero conflicts of interest.
+- [x] **Comments, not just scores.** A review needs a comment of at least the
+      configured length (140) before it can be submitted — enforced server-side
+      (`comment_too_short`, HTTP 400) and in the form.
+- [x] **Rule versioning.** Every rule change is recorded with old/new value,
+      justification and effective cycle, is rejected if it is not a future
+      cycle, and is readable by the whole org. The 40/35/25 budget weights are
+      validated as `financial / peer_review / strategic` summing to 100 and can
+      never be applied retroactively.
+- [x] **Windows and seats are enforced server-side** (role + scope resolution
+      per request, `validatorResource()` for pod-scoped validator seats), not by
+      disabled buttons: 13 HTTP-edge tests in `tests/integration/review-routes.test.ts`.
 
 ### Phase 2 — definition of done
 

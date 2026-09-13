@@ -42,7 +42,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/budget', label: 'Budget Market', icon: IconBudget, phase: 4, available: false, primary: true },
   { href: '/calendar', label: 'Sprint Calendar', icon: IconCalendar, phase: 1, available: true, primary: true },
   { href: '/coaching', label: 'Coaching', icon: IconCoaching, phase: 5, available: false },
-  { href: '/review', label: 'Peer Review & Cases', icon: IconReview, phase: 3, available: false },
+  { href: '/review', label: 'Peer Review & Cases', icon: IconReview, phase: 3, available: true, primary: true },
   { href: '/archive', label: 'Archive', icon: IconArchive, phase: 6, available: false },
   { href: '/hub', label: 'Hub Console', icon: IconHub, hubOnly: true, phase: 7, available: false },
 ];
