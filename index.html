@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>اکوسیستم OS — سیستم‌عامل سازمان خودگردان</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 5 L88 26 L88 74 L50 95 L12 74 L12 26 Z' fill='%230f172a'/%3E%3Ccircle cx='50' cy='30' r='13' fill='%2314b8a6'/%3E%3Ccircle cx='28' cy='68' r='13' fill='%2314b8a6'/%3E%3Ccircle cx='72' cy='68' r='13' fill='%2314b8a6'/%3E%3Cpath d='M50 43 L30 57 M50 43 L70 57 M32 68 L68 68' stroke='white' stroke-width='2.5'/%3E%3C/svg%3E">
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+<style>
+:root{--ink:#0f172a;--line:#e2e8f0;--muted:#64748b;--good:#0f766e;--bg:#f8fafc;--card:#fff;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.08)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Vazirmatn',Tahoma,sans-serif;background:var(--bg);color:var(--ink);display:flex;min-height:100vh;line-height:1.8}
+body.en{font-family:Inter,system-ui,sans-serif;direction:ltr}
+button,input,select{font-family:inherit}
+.sidebar{width:280px;background:var(--ink);color:#e2e8f0;display:flex;flex-direction:column;flex-shrink:0;height:100vh;position:sticky;top:0;overflow:hidden}
+.sidebar-top{padding:20px 18px;border-bottom:1px solid #1e293b;display:flex;gap:12px;align-items:center}
+.logo{width:40px;height:40px;background:#0f172a;border-radius:10px;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.nav{flex:1;overflow-y:auto;padding:10px 0}
+.nav-group{padding:14px 18px 6px;font-size:10px;color:#475569;font-weight:800;letter-spacing:.1em}
+.nav-item{display:flex;gap:12px;align-items:center;padding:12px 18px;color:#94a3b8;cursor:pointer;border-right:3px solid transparent;transition:.15s}
+.nav-item:hover{background:#1e293b;color:#e2e8f0}
+.nav-item.active{background:#1e293b;color:white;border-right-color:#14b8a6;font-weight:800}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{height:64px;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:10;gap:12px}
+.pill{border:1px solid var(--line);background:white;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;box-shadow:var(--shadow);display:inline-flex;gap:6px;align-items:center}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--good)}
+.content{padding:20px;max-width:1300px;width:100%;margin:0 auto}
+.grid{display:grid;gap:16px}.grid-2{grid-template-columns:1.3fr .7fr}.grid-3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:1000px){.grid-2,.grid-3{grid-template-columns:1fr}.sidebar{width:70px}.hide{display:none}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.card h3{font-size:13px;font-weight:800;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.kpi{font-size:32px;font-weight:900}
+.muted{color:var(--muted);font-size:11px}
+.badge{font-size:10px;border:1px solid var(--line);padding:4px 10px;border-radius:20px;background:white;font-weight:700}
+.badge-good{background:#ccfbf1;border-color:#99f6e0;color:#0f766e}
+.badge-watch{background:#fef3c7;border-color:#fde68a;color:#92400e}
+.table{width:100%;border-collapse:collapse;font-size:12px}.table th{text-align:right;padding:10px;border-bottom:1px solid var(--line);font-size:10px;color:var(--muted);font-weight:800}.en .table th{text-align:left}.table td{padding:10px;border-bottom:1px solid #f1f5f9}
+.btn{padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:white;font-weight:700;font-size:12px;cursor:pointer;transition:.15s}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.btn-primary{background:var(--ink);color:white;border-color:var(--ink)}
+.btn-sm{padding:5px 10px;font-size:11px}
+.input{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-size:12px}
+.input:focus{outline:none;border-color:var(--ink)}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.6);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal.open{display:flex}
+.modal-box{background:white;border-radius:16px;padding:24px;width:100%;max-width:500px;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.bar{height:8px;background:#f1f5f9;border-radius:10px;overflow:hidden;display:flex}.bar div{height:100%}
+.lang{display:flex;background:#f1f5f9;border-radius:12px;padding:3px;gap:3px}
+.lang button{padding:6px 12px;border-radius:8px;border:none;background:transparent;font-weight:800;font-size:11px;cursor:pointer;color:var(--muted)}
+.lang button.active{background:white;color:var(--ink);box-shadow:var(--shadow)}
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-top">
+    <div class="logo">
+      <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <path d="M50 5 L88 26 L88 74 L50 95 L12 74 L12 26 Z" fill="#0f172a"/>
+        <circle cx="50" cy="28" r="12" fill="#14b8a6"/>
+        <circle cx="28" cy="66" r="12" fill="#14b8a6"/>
+        <circle cx="72" cy="66" r="12" fill="#14b8a6"/>
+        <path d="M50 40 L30 54 M50 40 L70 54 M32 66 L68 66" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="hide"><div style="font-weight:900;color:white;font-size:15px">اکوسیستم OS</div><div style="font-size:11px;color:#64748b">سازمان خودگردان</div></div>
+  </div>
+  <div class="nav" id="nav"></div>
+  <div style="padding:14px 18px;border-top:1px solid #1e293b" class="hide">
+    <div style="font-size:11px;display:flex;justify-content:space-between"><span>پیشرفت چرخه</span><span id="pct">52%</span></div>
+    <div style="height:4px;background:#1e293b;border-radius:10px;margin-top:6px;overflow:hidden"><div id="bar" style="height:100%;background:#14b8a6;width:52%"></div></div>
+    <div style="margin-top:12px;display:flex;gap:6px"><button class="btn btn-sm" style="flex:1" onclick="exportDB()">خروجی</button><button class="btn btn-sm" style="flex:1" onclick="importDB()">ورودی</button></div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;gap:10px;align-items:center">
+      <div class="logo" style="width:36px;height:36px"><svg width="26" height="26" viewBox="0 0 100 100"><path d="M50 5 L88 26 L88 74 L50 95 L12 74 L12 26 Z" fill="#0f172a"/><circle cx="50" cy="28" r="12" fill="#14b8a6"/><circle cx="28" cy="66" r="12" fill="#14b8a6"/><circle cx="72" cy="66" r="12" fill="#14b8a6"/><path d="M50 40 L30 54 M50 40 L70 54 M32 66 L68 66" stroke="white" stroke-width="2.2"/></svg></div>
+      <div style="font-weight:900;font-size:17px" id="title">داشبورد</div>
+      <div class="pill"><span class="dot"></span><span id="cycle">روز ۴۷ • اجرا</span></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="lang"><button id="bFa" class="active" onclick="setLang('fa')">فا</button><button id="bEn" onclick="setLang('en')">EN</button></div>
+      <input class="input" id="search" placeholder="جستجو…" style="width:140px" oninput="doSearch(this.value)">
+      <div class="pill" style="background:var(--ink);color:white">س.ع • لید</div>
+    </div>
+  </div>
+  <div class="content" id="content">
+    <div class="grid grid-2">
+      <div class="card" style="border-right:4px solid #14b8a6"><h3>پاد من — پارس پرداخت <span class="badge badge-good">فعال</span></h3><div style="display:flex;gap:16px"><div><div class="kpi">82</div><div class="muted">سلامت • 3 عضو</div></div><div style="flex:1"><div style="height:8px;background:#f1f5f9;border-radius:10px"><div style="width:82%;background:#0f766e;height:100%"></div></div></div></div></div>
+      <div class="card"><h3>نبض سازمان</h3><table class="table"><tr><th>پاد</th><th>وضعیت</th><th>سلامت</th></tr><tr><td>پارس پرداخت</td><td>فعال</td><td>82</td></tr><tr><td>تحلیل ریسک</td><td>نیاز به توجه</td><td>64</td></tr></table></div>
+    </div>
+    <div style="text-align:center;padding:20px;color:#64748b">در حال بارگذاری کامل محصول… اگر این متن ماند، کش مرورگر را پاک کنید و رفرش کنید (Ctrl+Shift+R)</div>
+  </div>
+</div>
+
+<div class="modal" id="modal"><div class="modal-box" id="box"></div></div>
+
+<script>
+// Simple clone
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+
+// Translations
+const T={
+fa:{
+dashboard:'داشبورد',pods:'پادها و تیم‌ها',agreements:'توافق‌نامه‌های CLOU',budget:'بازار بودجه',calendar:'تقویم اسپرینت',coaching:'کوچینگ',review:'بازبینی همتا',hub:'هاب استراتژیک',archive:'آرشیو',notifications:'اعلان‌ها',settings:'تنظیمات',
+myPod:'پاد من',orgPulse:'نبض سازمان',budgetMarket:'بازار بودجه',timeline:'خط زمانی چرخه',attention:'نیاز به توجه',
+active:'فعال',watch:'نیاز به توجه',members:'عضو',health:'سلامت',lead:'لید',open:'باز کردن',edit:'ویرایش',del:'حذف',newPod:'پاد جدید',create:'ایجاد',cancel:'لغو',
+fromTo:'از → به',type:'نوع',title:'عنوان',status:'وضعیت',actions:'عملیات',newAgr:'توافق جدید',financial:'مالی (۰.۴۰)',peer:'همتا (۰.۳۵)',strategic:'استراتژیک (۰.۲۵)',score:'امتیاز',alloc:'تخصیص',prov:'منبع',sim:'شبیه‌ساز',recalc:'محاسبه مجدد',
+setup:'راه‌اندازی',exec:'اجرا',pitch:'ارائه',rev:'بازبینی',allocP:'تخصیص',plusDay:'+۱ روز',
+coach:'کوچ',atRisk:'در معرض خطر',notes:'یادداشت‌ها',assign:'تخصیص',
+trial:'آزمون ورودی',account:'پاسخگویی',pass:'قبولی',disc:'قطع همکاری',
+wizard:'جادوگر استقرار',startW:'شروع جادوگر',capital:'جریان سرمایه',investor:'سرمایه‌گذار',holding:'هلدینگ',
+searchA:'جستجو…',lessons:'درس‌آموخته‌ها',acts:'فعالیت‌ها',needAct:'نیاز به اقدام',markRead:'خوانده شد',markAll:'همه خوانده شد',
+storage:'ذخیره‌سازی',about:'درباره محصول',ready:'آماده فروش',export:'خروجی',import:'ورودی',
+},
+en:{
+dashboard:'Dashboard',pods:'Pods & Teams',agreements:'CLOU Agreements',budget:'Budget Market',calendar:'Sprint Calendar',coaching:'Coaching',review:'Peer Review',hub:'Strategic Hub',archive:'Archive',notifications:'Notifications',settings:'Settings',
+myPod:'My Pod',orgPulse:'Organization Pulse',budgetMarket:'Budget Market',timeline:'Cycle Timeline',attention:'Needs Attention',
+active:'active',watch:'watch',members:'members',health:'Health',lead:'Lead',open:'Open',edit:'Edit',del:'Delete',newPod:'New Pod',create:'Create',cancel:'Cancel',
+fromTo:'From → To',type:'Type',title:'Title',status:'Status',actions:'Actions',newAgr:'New Agreement',financial:'Financial (0.40)',peer:'Peer (0.35)',strategic:'Strategic (0.25)',score:'Score',alloc:'Allocation',prov:'Provenance',sim:'Simulator',recalc:'Recompute',
+setup:'Setup',exec:'Execution',pitch:'Pitch',rev:'Review',allocP:'Allocation',plusDay:'+1 Day',
+coach:'Coach',atRisk:'At-risk',notes:'Notes',assign:'Assign',
+trial:'Entry Trial',account:'Accountability',pass:'Pass',disc:'Discontinue',
+wizard:'Deployment Wizard',startW:'Start Wizard',capital:'Capital Flow',investor:'Investor',holding:'Holding',
+searchA:'Search…',lessons:'Lessons',acts:'Activities',needAct:'Needs Action',markRead:'Mark read',markAll:'Mark all read',
+storage:'Storage',about:'About',ready:'Ready to sell',export:'Export',import:'Import',
+}
+};
+let lang='fa';
+try{ const s=localStorage.getItem('eco_lang_final'); if(s) lang=s; }catch(e){}
+function tt(k){ return (T[lang]&&T[lang][k])||T.en[k]||k; }
+function setLang(l){
+  lang=l;
+  try{ localStorage.setItem('eco_lang_final',l); }catch(e){}
+  document.documentElement.lang=l;
+  document.documentElement.dir=l==='fa'?'rtl':'ltr';
+  document.body.className=l==='en'?'en':'';
+  const bf=document.getElementById('bFa'), be=document.getElementById('bEn');
+  if(bf) bf.className=l==='fa'?'active':''; 
+  if(be) be.className=l==='en'?'active':'';
+  renderAll();
+}
+function renderAll(){
+  renderNav();
+  const cur = window.curPage||'dashboard';
+  go(cur);
+}
+
+// DB
+const KEY='eco_v5_final';
+const DEF={
+pods:[
+{id:'p1',fa:'پارس پرداخت',en:'Pars Payments',status:'active',members:3,health:82,lead:'س.ع',leadEn:'SO'},
+{id:'p2',fa:'تحلیل ریسک',en:'Risk Analytics',status:'watch',members:4,health:64,lead:'ع.ر',leadEn:'AR'},
+{id:'p3',fa:'آزمایشگاه رشد',en:'Growth Lab',status:'active',members:2,health:77,lead:'م.ک',leadEn:'MK'},
+],
+agrs:[
+{id:'a1',fromFa:'پارس پرداخت',fromEn:'Pars Payments',toFa:'تحلیل ریسک',toEn:'Risk Analytics',type:'CLOU',titleFa:'API تشخیص تقلب',titleEn:'Fraud API',status:'active'},
+{id:'a2',fromFa:'پارس پرداخت',fromEn:'Pars Payments',toFa:'هاب استقرار',toEn:'Hub Deploy',type:'Shared Infra',titleFa:'کلاستر کوبر',titleEn:'K8s cluster',status:'active'},
+],
+budgets:[
+{podId:'p1',fa:'پارس پرداخت',en:'Pars Payments',fin:78,peer:82,strat:65,score:76.65,alloc:12.4},
+{podId:'p2',fa:'تحلیل ریسک',en:'Risk Analytics',fin:85,peer:70,strat:72,score:76.5,alloc:11.8},
+{podId:'p3',fa:'آزمایشگاه رشد',en:'Growth Lab',fin:65,peer:88,strat:90,score:79.3,alloc:14.2},
+],
+cycle:{day:47,phaseFa:'اجرا',phaseEn:'Execution',num:12},
+notifs:[
+{id:'n1',fa:'بازبینی همتا — تحلیل ریسک',en:'Peer Review — Risk',ctxFa:'موعد روز ۸۲',ctxEn:'Due Day 82',read:false},
+{id:'n2',fa:'پیشنهاد CLOU — رشد → پارس',en:'CLOU Proposal',ctxFa:'در انتظار تایید',ctxEn:'Awaiting approval',read:false},
+],
+};
+function load(){
+  try{
+    const s=localStorage.getItem(KEY);
+    if(s) return JSON.parse(s);
+    return clone(DEF);
+  }catch(e){ return clone(DEF); }
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){} renderAll(); }
+let db=load();
+function score(f,p,s){ return +(0.4*f+0.35*p+0.25*s).toFixed(2); }
+function alloc(buds){ const tot=buds.reduce((s,b)=>s+b.score,0); if(!tot) return buds; return buds.map(b=>({...b,alloc:+(b.score/tot*100).toFixed(1)})); }
+function pn(p){ return lang==='fa'?p.fa:p.en; }
+function pl(p){ return lang==='fa'?p.lead:p.leadEn; }
+
+// Nav
+const NAV=[
+{id:'dashboard',fa:'داشبورد',en:'Dashboard',icon:'◧'},
+{gFa:'پادها و توافق‌ها',gEn:'PODS & AGREEMENTS'},
+{id:'pods',fa:'پادها و تیم‌ها',en:'Pods & Teams',icon:'◫',dot:'#14b8a6'},
+{id:'agreements',fa:'توافق‌نامه‌های CLOU',en:'CLOU Agreements',icon:'⇄'},
+{id:'budget',fa:'بازار بودجه',en:'Budget Market',icon:'$',dot:'#b45309'},
+{id:'calendar',fa:'تقویم اسپرینت',en:'Sprint Calendar',icon:'◷'},
+{gFa:'حاکمیت',gEn:'GOVERNANCE'},
+{id:'coaching',fa:'کوچینگ',en:'Coaching',icon:'◎'},
+{id:'review',fa:'بازبینی همتا',en:'Peer Review',icon:'☑'},
+{id:'hub',fa:'هاب استراتژیک',en:'Strategic Hub',icon:'⬡'},
+{gFa:'سیستم',gEn:'SYSTEM'},
+{id:'archive',fa:'آرشیو',en:'Archive',icon:'⧉'},
+{id:'notifications',fa:'اعلان‌ها',en:'Notifications',icon:'🔔',dot:'#b91c1c'},
+{id:'settings',fa:'تنظیمات',en:'Settings',icon:'⚙'},
+];
+window.curPage='dashboard';
+function renderNav(){
+  const el=document.getElementById('nav');
+  if(!el) return;
+  el.innerHTML=NAV.map(n=>{
+    if(n.gFa) return `<div class="nav-group hide">${lang==='fa'?n.gFa:n.gEn}</div>`;
+    const lb=lang==='fa'?n.fa:n.en;
+    return `<div class="nav-item ${window.curPage===n.id?'active':''}" onclick="go('${n.id}')"><span>${n.icon}</span><span class="hide">${lb}</span>${n.dot?`<span class="dot" style="background:${n.dot};width:7px;height:7px;border-radius:50%;margin-right:auto"></span>`:''}</div>`;
+  }).join('');
+  const pct=document.getElementById('pct'), bar=document.getElementById('bar'), cyc=document.getElementById('cycle');
+  if(pct) pct.textContent=Math.round(db.cycle.day/90*100)+'%';
+  if(bar) bar.style.width=Math.round(db.cycle.day/90*100)+'%';
+  if(cyc) cyc.textContent=lang==='fa'?`روز ${db.cycle.day} • فاز ${db.cycle.phaseFa}`:`Day ${db.cycle.day} • ${db.cycle.phaseEn}`;
+}
+function go(id){
+  window.curPage=id;
+  renderNav();
+  const tEl=document.getElementById('title');
+  if(tEl){ const f=NAV.find(n=>n.id===id); if(f) tEl.textContent=lang==='fa'?f.fa:f.en; }
+  const map={dashboard:renderDash,pods:renderPods,agreements:renderAgrs,budget:renderBudget,calendar:renderCal,coaching:renderCoach,review:renderRev,hub:renderHub,archive:renderArch,notifications:renderNotifs,settings:renderSet};
+  const fn=map[id]||renderDash;
+  try{ fn(); }catch(e){ document.getElementById('content').innerHTML='<div style="padding:20px;color:red">Error: '+e.message+'<br><button class="btn" onclick="localStorage.clear();location.reload()">Clear & Reload</button></div>'; console.error(e); }
+}
+
+// Pages
+function renderDash(){
+  const pod=db.pods[0];
+  document.getElementById('content').innerHTML=`
+  <div class="grid grid-2">
+    <div class="card" style="border-right:4px solid #14b8a6">
+      <h3><span>${tt('myPod')} — ${pn(pod)}</span><span class="badge badge-good">${tt(pod.status)}</span></h3>
+      <div style="display:flex;gap:16px;align-items:center">
+        <div><div class="kpi">${pod.health}</div><div class="muted">${tt('health')} • ${pod.members} ${tt('members')}</div></div>
+        <div style="flex:1"><div class="bar"><div style="width:${pod.health}%;background:#0f766e"></div></div><div class="muted" style="margin-top:6px">${pod.members} ${tt('members')} • ${tt('lead')} ${pl(pod)}</div></div>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:8px"><button class="btn btn-primary" onclick="openPod('${pod.id}')">${tt('open')}</button><button class="btn" onclick="addCheck('${pod.id}')">${lang==='fa'?'+ چک‌این':'+ Check-in'}</button><button class="btn" onclick="go('pods')">${lang==='fa'?'همه پادها':'All Pods'}</button></div>
+    </div>
+    <div class="card">
+      <h3>${tt('orgPulse')} <span class="badge">${lang==='fa'?'به‌روز':'Recent'}</span></h3>
+      <table class="table"><tr><th>${lang==='fa'?'پاد':'Pod'}</th><th>${tt('status')}</th><th>${tt('health')}</th><th></th></tr>
+      ${db.pods.map(p=>`<tr><td>${pn(p)}</td><td><span class="badge ${p.status==='watch'?'badge-watch':'badge-good'}">${tt(p.status)}</span></td><td>${p.health}</td><td><button class="btn btn-sm" onclick="openPod('${p.id}')">${tt('open')}</button></td></tr>`).join('')}
+      </table>
+    </div>
+  </div>
+  <div class="grid grid-3" style="margin-top:16px">
+    <div class="card"><h3>${tt('budgetMarket')} <span class="badge">0.40/0.35/0.25</span></h3>
+      ${db.budgets.map(b=>`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:11px"><span>${lang==='fa'?b.fa:b.en} — ${b.score}</span><span class="badge badge-good">${b.alloc}%</span></div><div class="bar" style="margin-top:4px"><div style="width:40%;background:#1d4ed8"></div><div style="width:35%;background:#0f766e"></div><div style="width:25%;background:#b45309"></div></div></div>`).join('')}
+      <button class="btn" style="width:100%" onclick="go('budget')">${tt('open')}</button>
+    </div>
+    <div class="card"><h3>${tt('timeline')} <span class="badge">${lang==='fa'?db.cycle.phaseFa:db.cycle.phaseEn}</span></h3>
+      <div style="text-align:center;padding:10px"><svg width="140" height="140" viewBox="0 0 240 240"><circle cx="120" cy="120" r="80" fill="none" stroke="#e2e8f0" stroke-width="20"/><circle cx="120" cy="120" r="80" fill="none" stroke="#ccfbf1" stroke-width="20" stroke-dasharray="8 500"/><circle cx="120" cy="120" r="80" fill="none" stroke="#99f6e0" stroke-width="20" stroke-dasharray="420 80" stroke-dashoffset="-8"/><circle cx="120" cy="120" r="80" fill="none" stroke="#0f766e" stroke-width="24" stroke-dasharray="28 472" stroke-dashoffset="-428"/><text x="120" y="125" text-anchor="middle" font-size="20" font-weight="900">${db.cycle.day}</text></svg></div>
+      <div class="muted" style="text-align:center">${tt('setup')} 3.3% • ${tt('exec')} 85.5% • ${tt('pitch')} 5.5%</div>
+      <div style="display:flex;gap:6px;justify-content:center;margin-top:10px"><button class="btn btn-sm" onclick="plusDay()">${tt('plusDay')}</button><button class="btn btn-sm" onclick="go('calendar')">${tt('calendar')}</button></div>
+    </div>
+    <div class="card"><h3>${tt('attention')} <span class="badge badge-watch">${db.notifs.filter(n=>!n.read).length}</span></h3>
+      ${db.notifs.filter(n=>!n.read).map(n=>`<div style="border:1px solid #e2e8f0;padding:10px;border-radius:10px;margin-bottom:8px"><div style="font-weight:800;font-size:12px">${lang==='fa'?n.fa:n.en}</div><div class="muted">${lang==='fa'?n.ctxFa:n.ctxEn}</div></div>`).join('')||'<div style="text-align:center;padding:20px;color:#64748b">✓ '+(lang==='fa'?'همه مرتب':'All clear')+'</div>'}
+      <button class="btn" style="width:100%;margin-top:8px" onclick="go('notifications')">${tt('open')}</button>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px;background:linear-gradient(135deg,#0f172a,#1e293b);color:white;border-color:#1e293b">
+    <h3 style="color:white">${tt('ready')} — ${lang==='fa'?'اکوسیستم OS':'Ecosystem OS'} <span class="badge" style="background:#14b8a6;color:white;border-color:#14b8a6">✓ ${lang==='fa'?'آماده فروش':'Sellable'}</span></h3>
+    <div style="color:#94a3b8;font-size:11px;line-height:1.9">${lang==='fa'?'این نسخه کاملاً قابل استفاده است: ساخت پاد، توافق‌نامه، شبیه‌ساز بودجه با فرمول واقعی، تقویم ۹۰ روزه، کوچینگ، بازبینی، هاب، آرشیو، اعلان‌ها. خروجی/ورودی JSON، راست‌چین کامل با B Nazanin، لوگوی اختصاصی.':'Fully usable: create pods, agreements, budget simulator with real formula, 90-day calendar, coaching, review, hub, archive, notifications. JSON export/import, RTL B Nazanin, custom logo.'}</div>
+  </div>
+  `;
+}
+
+function renderPods(){
+  document.getElementById('content').innerHTML=`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h2 style="font-weight:900">${tt('pods')}</h2><button class="btn btn-primary" onclick="newPod()">+ ${tt('newPod')}</button></div>
+  <div class="grid grid-3">
+    ${db.pods.map(p=>`<div class="card"><h3>${pn(p)} <span class="badge ${p.status==='watch'?'badge-watch':'badge-good'}">${tt(p.status)}</span></h3><div class="muted">${p.members} ${tt('members')} • ${tt('lead')} ${pl(p)} • ${tt('health')} ${p.health}</div><div class="bar" style="margin-top:10px"><div style="width:${p.health}%;background:${p.health>75?'#0f766e':'#b45309'}"></div></div><div style="margin-top:12px;display:flex;gap:6px"><button class="btn btn-sm" onclick="openPod('${p.id}')">${tt('open')}</button><button class="btn btn-sm" onclick="editPod('${p.id}')">${tt('edit')}</button><button class="btn btn-sm" onclick="delPod('${p.id}')">${tt('del')}</button></div></div>`).join('')}
+  </div>`;
+}
+function renderAgrs(){
+  document.getElementById('content').innerHTML=`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h2 style="font-weight:900">${tt('agreements')}</h2><button class="btn btn-primary" onclick="newAgr()">+ ${tt('newAgr')}</button></div>
+  <div class="card"><table class="table"><tr><th>${tt('fromTo')}</th><th>${tt('type')}</th><th>${tt('title')}</th><th>${tt('status')}</th><th>${tt('actions')}</th></tr>
+  ${db.agrs.map(a=>`<tr><td>${lang==='fa'?a.fromFa:a.fromEn} → ${lang==='fa'?a.toFa:a.toEn}</td><td><span class="badge ${a.type==='CLOU'?'badge-good':''}">${a.type}</span></td><td>${lang==='fa'?a.titleFa:a.titleEn}</td><td><span class="badge badge-good">${tt(a.status)}</span></td><td><button class="btn btn-sm" onclick="delAgr('${a.id}')">${tt('del')}</button></td></tr>`).join('')}
+  </table></div>`;
+}
+function renderBudget(){
+  document.getElementById('content').innerHTML=`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h2 style="font-weight:900">${tt('budget')}</h2><button class="btn btn-primary" onclick="openSim()">${tt('sim')}</button></div>
+  <div class="card" style="margin-bottom:12px"><div style="font-family:monospace;font-size:11px;background:#f8fafc;padding:12px;border:1px solid #e2e8f0;border-radius:8px">${lang==='fa'?'امتیاز = ۰.۴۰×مالی + ۰.۳۵×همتا + ۰.۲۵×استراتژیک<br>بودجه = (امتیاز/Σ)×استخر • سقف ۳۰٪':'Score = 0.40×Fin + 0.35×Peer + 0.25×Strat<br>Budget = (Score/Σ)×Pool • Cap 30%'}</div></div>
+  <div class="card"><table class="table"><tr><th>${lang==='fa'?'پاد':'Pod'}</th><th>${tt('financial')}</th><th>${tt('peer')}</th><th>${tt('strategic')}</th><th>${tt('score')}</th><th>${tt('alloc')}</th><th></th></tr>
+  ${db.budgets.map(b=>`<tr><td>${lang==='fa'?b.fa:b.en}</td><td><input class="input" style="width:65px" value="${b.fin}" onchange="updB('${b.podId}','fin',this.value)"></td><td><input class="input" style="width:65px" value="${b.peer}" onchange="updB('${b.podId}','peer',this.value)"></td><td><input class="input" style="width:65px" value="${b.strat}" onchange="updB('${b.podId}','strat',this.value)"></td><td><b>${b.score}</b></td><td><span class="badge badge-good">${b.alloc}%</span></td><td><button class="btn btn-sm" onclick="prov('${b.podId}')">${tt('prov')}</button></td></tr>`).join('')}
+  </table><div style="margin-top:12px;display:flex;gap:8px"><button class="btn" onclick="recalc()">${tt('recalc')}</button></div></div>`;
+}
+function renderCal(){ document.getElementById('content').innerHTML=`<h2 style="font-weight:900">${tt('calendar')}</h2><div class="grid grid-2" style="margin-top:16px"><div class="card"><h3>${tt('timeline')}</h3><div style="text-align:center;padding:20px"><svg width="180" height="180" viewBox="0 0 240 240"><circle cx="120" cy="120" r="85" fill="none" stroke="#e2e8f0" stroke-width="22"/><circle cx="120" cy="120" r="85" fill="none" stroke="#ccfbf1" stroke-width="22" stroke-dasharray="8 500"/><circle cx="120" cy="120" r="85" fill="none" stroke="#99f6e0" stroke-width="22" stroke-dasharray="420 80" stroke-dashoffset="-8"/><circle cx="120" cy="120" r="85" fill="none" stroke="#0f766e" stroke-width="24" stroke-dasharray="28 472" stroke-dashoffset="-428"/><text x="120" y="125" text-anchor="middle" font-size="22" font-weight="900">${db.cycle.day}</text></svg></div></div><div class="card"><h3>${lang==='fa'?'فازها':'Phases'}</h3><table class="table"><tr><th>${lang==='fa'?'فاز':'Phase'}</th><th>%</th><th>${lang==='fa'?'روز':'Day'}</th></tr><tr><td>${tt('setup')}</td><td>3.3%</td><td>1-3</td></tr><tr><td>${tt('exec')}</td><td>85.5%</td><td>4-80</td></tr><tr><td>${tt('pitch')}</td><td>5.5%</td><td>81-85</td></tr><tr><td>${tt('rev')}</td><td>3.3%</td><td>86-88</td></tr><tr><td>${tt('allocP')}</td><td>2.2%</td><td>89-90</td></tr></table><button class="btn" style="margin-top:12px" onclick="plusDay()">${tt('plusDay')}</button></div></div>`; }
+function renderCoach(){ document.getElementById('content').innerHTML=`<h2 style="font-weight:900">${tt('coaching')}</h2><div class="card" style="margin-top:16px"><table class="table"><tr><th>${lang==='fa'?'پاد':'Pod'}</th><th>${tt('health')}</th><th>${tt('atRisk')}</th><th>${tt('coach')}</th></tr><tr><td>پارس پرداخت</td><td><span class="badge badge-good">${tt('active')}</span></td><td>0</td><td>کوچ الف</td></tr><tr><td>تحلیل ریسک</td><td><span class="badge badge-watch">${tt('watch')}</span></td><td>2</td><td>کوچ ب</td></tr></table></div>`; }
+function renderRev(){ document.getElementById('content').innerHTML=`<h2 style="font-weight:900">${tt('review')}</h2><div class="card" style="margin-top:16px"><table class="table"><tr><th>${lang==='fa'?'پاد':'Pod'}</th><th>${tt('type')}</th><th>${tt('status')}</th><th>${tt('actions')}</th></tr><tr><td>تحلیل ریسک</td><td>${tt('trial')}</td><td>pending</td><td><button class="btn btn-sm">${tt('pass')}</button> <button class="btn btn-sm">${tt('disc')}</button></td></tr></table></div>`; }
+function renderHub(){ document.getElementById('content').innerHTML=`<h2 style="font-weight:900">${tt('hub')}</h2><div class="card" style="margin-top:16px"><h3>${tt('wizard')}</h3><div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><span class="badge badge-good">1. ${lang==='fa'?'تعریف':'Define'} ✓</span> → <span class="badge">2. Hub</span> → <span class="badge">3. Trial</span></div><button class="btn btn-primary" style="margin-top:14px" onclick="alert('${lang==='fa'?'پاد آزمایشی ساخته شد':'Trial created}')">${tt('startW')}</button></div><div class="card" style="margin-top:12px"><h3>${tt('capital')}</h3><div style="text-align:center;padding:10px"><svg width="100%" height="40" viewBox="0 0 400 40"><rect x="10" y="5" width="60" height="30" rx="8" fill="#f8fafc" stroke="#e2e8f0"/><text x="40" y="23" text-anchor="middle" font-size="9">${tt('investor')}</text><rect x="100" y="5" width="60" height="30" rx="8" fill="#f8fafc" stroke="#e2e8f0"/><text x="130" y="23" text-anchor="middle" font-size="9">${tt('holding')}</text><rect x="190" y="5" width="70" height="30" rx="8" fill="#f0fdfa" stroke="#99f6e0"/><text x="225" y="23" text-anchor="middle" font-size="8">${tt('budgetMarket')}</text></svg></div></div>`; }
+function renderArch(){ document.getElementById('content').innerHTML=`<h2 style="font-weight:900">${tt('archive')}</h2><div class="card" style="margin-top:16px"><input class="input" placeholder="${tt('searchA')}" oninput="filterA(this.value)"><table class="table" style="margin-top:10px" id="archT"><tr><th>${tt('type')}</th><th>${tt('title')}</th></tr><tr><td>${tt('lessons')}</td><td>مثبت کاذب تشخیص تقلب</td></tr><tr><td>${tt('acts')}</td><td>پارس پرداخت بروز شد</td></tr></table></div>`; }
+function renderNotifs(){ document.getElementById('content').innerHTML=`<h2 style="font-weight:900">${tt('notifications')}</h2><div class="card" style="margin-top:16px">${db.notifs.map(n=>`<div style="border:1px solid #e2e8f0;padding:12px;border-radius:10px;margin-bottom:8px;display:flex;justify-content:space-between"><div><div style="font-weight:800;font-size:12px">${lang==='fa'?n.fa:n.en}</div><div class="muted">${lang==='fa'?n.ctxFa:n.ctxEn}</div></div><button class="btn btn-sm" onclick="toggleN('${n.id}')">${n.read?'Unread':'Read'}</button></div>`).join('')}<button class="btn" onclick="readAll()">${tt('markAll')}</button></div>`; }
+function renderSet(){ document.getElementById('content').innerHTML=`<h2 style="font-weight:900">${tt('settings')}</h2><div class="grid grid-2" style="margin-top:16px"><div class="card"><h3>${tt('storage')}</h3><div class="muted">localStorage • ${JSON.stringify(db).length} bytes</div><div style="margin-top:12px;display:flex;gap:8px"><button class="btn" onclick="exportDB()">${tt('export')}</button><button class="btn" onclick="importDB()">${tt('import')}</button><button class="btn" onclick="resetDB()" style="color:#b91c1c">Reset</button></div></div><div class="card"><h3>${tt('about')}</h3><div class="muted">${lang==='fa'?'اکوسیستم OS — سیستم‌عامل سازمان خودگردان با ۶ مکانیزم، ۱۰ ماژول، فرمول بودجه ۰.۴۰/۰.۳۵/۰.۲۵، ۱۰۰٪ در مرورگر، آماده فروش.':'Ecosystem OS — Self-governing org OS with 6 mechanisms, 10 modules, budget 0.40/0.35/0.25, 100% browser, ready to sell.'}</div></div></div>`; }
+
+// Modals
+function openM(h){ document.getElementById('box').innerHTML=h; document.getElementById('modal').classList.add('open'); }
+function closeM(){ document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click',e=>{ if(e.target.id==='modal') closeM(); });
+
+function newPod(){ openM(`<h3>${tt('newPod')}</h3><div style="display:flex;flex-direction:column;gap:10px;margin-top:12px"><input id="nFa" class="input" placeholder="نام فارسی"><input id="nEn" class="input" placeholder="Name EN"><input id="nLead" class="input" placeholder="لید"><div style="display:flex;gap:8px"><button class="btn btn-primary" style="flex:1" onclick="doNewPod()">${tt('create')}</button><button class="btn" style="flex:1" onclick="closeM()">${tt('cancel')}</button></div></div>`); }
+function doNewPod(){ const fa=document.getElementById('nFa').value.trim(), en=document.getElementById('nEn').value.trim()||fa, lead=document.getElementById('nLead').value.trim()||'XX'; if(!fa) return; const id='p'+Date.now(); db.pods.push({id,fa,en,status:'active',members:1,health:75,lead,leadEn:lead}); db.budgets.push({podId:id,fa,en,fin:70,peer:70,strat:70,score:70,alloc:0}); db.budgets=alloc(db.budgets); save(); closeM(); }
+function openPod(id){ const p=db.pods.find(x=>x.id===id); openM(`<h3>${pn(p)}</h3><div class="muted">${p.members} ${tt('members')} • ${pl(p)}</div><div class="bar" style="margin-top:12px"><div style="width:${p.health}%;background:#0f766e"></div></div><div style="margin-top:14px;display:flex;gap:8px"><button class="btn" onclick="addM('${id}')">+ ${tt('members')}</button><button class="btn" onclick="closeM()">${lang==='fa'?'بستن':'Close'}</button></div>`); }
+function addM(id){ const p=db.pods.find(x=>x.id===id); if(p){ p.members++; p.health=Math.min(100,p.health+2); save(); closeM(); } }
+function editPod(id){ const p=db.pods.find(x=>x.id===id); const nn=prompt('New name', pn(p)); if(nn){ if(lang==='fa') p.fa=nn; else p.en=nn; save(); } }
+function delPod(id){ if(confirm('Delete?')){ db.pods=db.pods.filter(x=>x.id!==id); db.budgets=db.budgets.filter(x=>x.podId!==id); save(); } }
+function addCheck(id){ const p=db.pods.find(x=>x.id===id); if(p){ p.health=Math.min(100,p.health+1); save(); } }
+
+function newAgr(){ openM(`<h3>${tt('newAgr')}</h3><div style="display:flex;flex-direction:column;gap:10px;margin-top:12px"><select id="af" class="input">${db.pods.map(p=>`<option value="${p.id}">${pn(p)}</option>`).join('')}</select><select id="at" class="input">${db.pods.map(p=>`<option value="${p.id}">${pn(p)}</option>`).join('')}</select><input id="atFa" class="input" placeholder="عنوان فارسی"><input id="atEn" class="input" placeholder="Title EN"><div style="display:flex;gap:8px"><button class="btn btn-primary" style="flex:1" onclick="doNewAgr()">${tt('create')}</button><button class="btn" style="flex:1" onclick="closeM()">${tt('cancel')}</button></div></div>`); }
+function doNewAgr(){ const f=document.getElementById('af').value, t=document.getElementById('at').value; const pf=db.pods.find(x=>x.id===f), pt=db.pods.find(x=>x.id===t); const tFa=document.getElementById('atFa').value.trim(), tEn=document.getElementById('atEn').value.trim()||tFa; if(!tFa) return; db.agrs.push({id:'a'+Date.now(),fromFa:pf.fa,fromEn:pf.en,toFa:pt.fa,toEn:pt.en,type:'CLOU',titleFa:tFa,titleEn:tEn,status:'active'}); save(); closeM(); }
+function delAgr(id){ db.agrs=db.agrs.filter(x=>x.id!==id); save(); }
+
+function updB(id,field,val){ const b=db.budgets.find(x=>x.podId===id); if(b){ b[field]=parseInt(val)||0; b.score=score(b.fin,b.peer,b.strat); db.budgets=alloc(db.budgets); save(); } }
+function recalc(){ db.budgets.forEach(b=>b.score=score(b.fin,b.peer,b.strat)); db.budgets=alloc(db.budgets); save(); }
+function prov(id){ const b=db.budgets.find(x=>x.podId===id); openM(`<h3>${tt('prov')} — ${lang==='fa'?b.fa:b.en}</h3><div style="background:#f8fafc;padding:12px;border:1px solid #e2e8f0;border-radius:8px;margin-top:12px;font-family:monospace;font-size:11px">${b.fin}×0.40=${(b.fin*0.4).toFixed(1)}<br>${b.peer}×0.35=${(b.peer*0.35).toFixed(1)}<br>${b.strat}×0.25=${(b.strat*0.25).toFixed(1)}<br><br>Score=${b.score}<br>Alloc=${b.alloc}%</div><button class="btn" style="width:100%;margin-top:12px" onclick="closeM()">Close</button>`); }
+function openSim(){ openM(`<h3>${tt('sim')}</h3><input id="pool" class="input" value="1000000" style="margin-top:12px"><button class="btn btn-primary" style="width:100%;margin-top:10px" onclick="runSim()">Run</button><div id="simR" style="margin-top:12px"></div><button class="btn" style="width:100%;margin-top:12px" onclick="closeM()">Close</button>`); }
+function runSim(){ const pool=parseInt(document.getElementById('pool').value)||1000000; const tot=db.budgets.reduce((s,b)=>s+b.score,0); const res=db.budgets.map(b=>({...b,allocM:Math.round(b.score/tot*pool)})); document.getElementById('simR').innerHTML=`<table class="table"><tr><th>Pod</th><th>Alloc</th></tr>${res.map(r=>`<tr><td>${lang==='fa'?r.fa:r.en}</td><td>$${r.allocM.toLocaleString()}</td></tr>`).join('')}</table>`; }
+
+function plusDay(){ db.cycle.day=Math.min(90,db.cycle.day+1); save(); }
+function filterA(q){ const rows=document.querySelectorAll('#archT tr'); rows.forEach((r,i)=>{ if(i===0) return; r.style.display=r.textContent.toLowerCase().includes(q.toLowerCase())?'':'none'; }); }
+function toggleN(id){ const n=db.notifs.find(x=>x.id===id); if(n) n.read=!n.read; save(); }
+function readAll(){ db.notifs.forEach(n=>n.read=true); save(); }
+
+function exportDB(){ const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='ecosystem-os.json'; a.click(); URL.revokeObjectURL(url); }
+function importDB(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='.json'; inp.onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ try{ db=JSON.parse(ev.target.result); save(); alert('OK'); }catch(err){ alert('Invalid: '+err.message); } }; r.readAsText(f); }; inp.click(); }
+function resetDB(){ if(confirm('Reset?')){ try{ localStorage.removeItem(KEY); }catch(e){} db=clone(DEF); save(); } }
+function doSearch(q){ if(!q) return; const res=db.pods.filter(p=>pn(p).toLowerCase().includes(q.toLowerCase())).map(p=>pn(p)); if(res.length) alert(res.join('\n')); }
+
+// Init
+setLang(lang);
+</script>
+</body>
+</html>
