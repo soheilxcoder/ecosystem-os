@@ -1,97 +1,81 @@
 /**
- * Hub Console — four hubs, one surface. Adapted from the live page; in the
- * showcase every hub card renders its sample counts.
+ * Hub Console — four hubs, one surface. Fully bilingual.
  */
 import { StatusChip } from '../../../components/ui/StatusChip';
 import { IconArrowRight } from '../../../components/ui/icons';
 import type { Persona } from '../data';
+import { useI18n } from '../i18n';
 
 export function HubScreen({ persona }: { persona: Persona }) {
+  const { t, num } = useI18n();
   const restricted = !persona.isHubUser;
 
   return (
     <div className="mx-auto max-w-6xl">
       <header className="mb-6">
-        <h1 className="font-display text-2xl text-ink-950">Hub Console</h1>
-        <p className="mt-1 max-w-prose text-sm text-slate-500">
-          Company X&apos;s four hubs. This console launches, tracks and reports — it never edits a
-          pod&apos;s score, budget or governance outcome.
-        </p>
+        <h1 className="font-display text-2xl text-ink-950">{t('hub.h1')}</h1>
+        <p className="mt-1 max-w-prose text-sm text-slate-500">{t('hub.sub')}</p>
       </header>
 
       {restricted && (
         <div className="mb-6 rounded border border-status-watch/40 bg-status-watch/10 px-4 py-3 text-sm text-ink-700">
-          You are viewing the console as {persona.roleLabel}. Hub sections below show sample data;
-          in the live product, seats without hub roles see a notice instead.
+          {t('hub.restricted', { role: t(persona.roleKey) })}
         </div>
       )}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <section className="rounded border border-line-200 bg-surface-white p-4">
           <div className="flex items-start justify-between gap-2">
-            <h2 className="font-display text-lg text-ink-950">Architecture Hub</h2>
-            <IconArrowRight size={16} className="mt-1 text-slate-500" />
+            <h2 className="font-display text-lg text-ink-950">{t('hub.arch')}</h2>
+            <IconArrowRight size={16} className="mt-1 text-slate-500 rtl:-scale-x-100" />
           </div>
-          <p className="mt-1 text-sm text-slate-500">
-            Rule versioning and the model&apos;s health — what governs, and what is about to change.
-          </p>
+          <p className="mt-1 text-sm text-slate-500">{t('hub.archDesc')}</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <StatusChip tone="neutral" label="42 versioned rules" />
-            <StatusChip tone="watch" label="1 pending change" />
+            <StatusChip tone="neutral" label={t('hub.rules', { n: num(42) })} />
+            <StatusChip tone="watch" label={t('hub.pending', { n: num(1) })} />
           </div>
         </section>
 
         <section className="rounded border border-line-200 bg-surface-white p-4">
           <div className="flex items-start justify-between gap-2">
-            <h2 className="font-display text-lg text-ink-950">Deployment Hub</h2>
-            <IconArrowRight size={16} className="mt-1 text-slate-500" />
+            <h2 className="font-display text-lg text-ink-950">{t('hub.deploy')}</h2>
+            <IconArrowRight size={16} className="mt-1 text-slate-500 rtl:-scale-x-100" />
           </div>
-          <p className="mt-1 text-sm text-slate-500">
-            The only door new pods come through — and the trial tracker that follows each one to
-            Day 90.
-          </p>
+          <p className="mt-1 text-sm text-slate-500">{t('hub.deployDesc')}</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <StatusChip tone="active" label="1 pod in trial — Cinder, Day 41" />
-            <StatusChip tone="neutral" label="2 pilots running" />
+            <StatusChip tone="active" label={t('hub.trial')} />
+            <StatusChip tone="neutral" label={t('hub.pilots')} />
           </div>
         </section>
 
         <section className="rounded border border-line-200 bg-surface-white p-4">
           <div className="flex items-start justify-between gap-2">
-            <h2 className="font-display text-lg text-ink-950">Coaching Hub</h2>
-            <IconArrowRight size={16} className="mt-1 text-slate-500" />
+            <h2 className="font-display text-lg text-ink-950">{t('hub.coaching')}</h2>
+            <IconArrowRight size={16} className="mt-1 text-slate-500 rtl:-scale-x-100" />
           </div>
-          <p className="mt-1 text-sm text-slate-500">
-            Roster, rotation windows and coverage — every pod coached, no pod over-coached.
-          </p>
+          <p className="mt-1 text-sm text-slate-500">{t('hub.coachingDesc')}</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <StatusChip tone="good" label="2 coaches · 5 pods covered" />
-            <StatusChip tone="watch" label="Cora rotates in 27 days" />
+            <StatusChip tone="good" label={t('hub.coverage')} />
+            <StatusChip tone="watch" label={t('hub.rotateSoon')} />
           </div>
         </section>
 
         <section className="rounded border border-line-200 bg-surface-white p-4">
           <div className="flex items-start justify-between gap-2">
-            <h2 className="font-display text-lg text-ink-950">Strategic Interactions Hub</h2>
-            <IconArrowRight size={16} className="mt-1 text-slate-500" />
+            <h2 className="font-display text-lg text-ink-950">{t('hub.strategic')}</h2>
+            <IconArrowRight size={16} className="mt-1 text-slate-500 rtl:-scale-x-100" />
           </div>
-          <p className="mt-1 text-sm text-slate-500">
-            Investor-facing reporting and the themes pods align their pitches to.
-          </p>
+          <p className="mt-1 text-sm text-slate-500">{t('hub.strategicDesc')}</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <StatusChip tone="neutral" label="1 draft investor report" />
-            <StatusChip tone="good" label="Q3 report published" />
+            <StatusChip tone="neutral" label={t('hub.draftReport')} />
+            <StatusChip tone="good" label={t('hub.published')} />
           </div>
         </section>
       </div>
 
       <section className="mt-6 rounded border border-line-200 bg-surface-white p-4">
-        <h2 className="text-sm font-medium text-ink-950">What this console deliberately is not</h2>
-        <p className="mt-1 max-w-prose text-sm text-slate-500">
-          There is no &quot;admin override&quot; here. A hub can start a trial, publish a report or
-          propose a rule — but it cannot edit a pod&apos;s score, budget or governance outcome.
-          Those change only through their own modules, with an audit trail.
-        </p>
+        <h2 className="text-sm font-medium text-ink-950">{t('hub.notAdmin')}</h2>
+        <p className="mt-1 max-w-prose text-sm text-slate-500">{t('hub.notAdminText')}</p>
       </section>
     </div>
   );

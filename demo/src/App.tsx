@@ -1,12 +1,14 @@
 /**
- * Static showcase shell — the real Sidebar, BottomTabBar and design tokens
- * from the production app, driven by a hash router and sample data.
+ * Static showcase shell — the production Sidebar, BottomTabBar and design
+ * tokens driven by a hash router, sample data and a bilingual (EN/فارسی)
+ * i18n layer with full RTL support.
  */
 import { useState, type ReactNode } from 'react';
 import { usePathname } from './shims/navigation';
-import { Sidebar } from '../../components/layout/Sidebar';
-import { BottomTabBar } from '../../components/layout/BottomTabBar';
+import { SidebarI18n } from './components/layout';
+import { BottomTabBarI18n } from './components/layout';
 import { HOLDINGS, ORG_NAME, PERSONAS, type Persona } from './data';
+import { useI18n } from './i18n';
 import { LoginScreen } from './screens/login';
 import { DashboardScreen } from './screens/dashboard';
 import { PodScreen } from './screens/pod';
@@ -24,16 +26,17 @@ import { InvestorScreen } from './screens/investor';
 export function App({ initialPersona = null }: { initialPersona?: Persona | null } = {}) {
   const [persona, setPersona] = useState<Persona | null>(initialPersona);
   const pathname = usePathname();
+  const { t, lang, setLang } = useI18n();
 
   if (!persona) {
-    return <LoginScreen personas={PERSONAS} onSignIn={setPersona} />;
+    return <LoginScreen onSignIn={setPersona} />;
   }
 
   const screen = route(pathname, persona);
 
   return (
     <div className="flex min-h-screen bg-paper-100">
-      <Sidebar
+      <SidebarI18n
         userName={persona.fullName}
         userEmail={persona.email}
         orgName={ORG_NAME}
@@ -43,6 +46,9 @@ export function App({ initialPersona = null }: { initialPersona?: Persona | null
         notificationCount={persona.notificationCount}
         urgentCount={persona.urgentCount}
         signOutAction={() => setPersona(null)}
+        holdingLabel={(holding) =>
+          holding.id === 'holding-pars' ? t('holding.holding-pars') : t('holding.holding-dena')
+        }
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -50,21 +56,30 @@ export function App({ initialPersona = null }: { initialPersona?: Persona | null
           role="note"
           className="border-b border-status-watch/40 bg-status-watch/10 px-6 py-1.5 text-xs text-ink-700"
         >
-          Static showcase with sample data — the live platform runs on Node.js with a real database.
+          {t('shell.banner')}
         </div>
 
         <header className="flex h-14 shrink-0 items-center justify-between border-b border-line-200 bg-white px-6">
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-ink-950">Ecosystem OS</p>
-            <p className="tabular text-xs text-slate-500">Cycle 3 · Day 62 of 90 · Execution phase</p>
+            <p className="tabular text-xs text-slate-500">{t('shell.cycleStatus')}</p>
           </div>
-          <span className="hidden text-sm text-slate-500 md:block">{persona.roleLabel}</span>
+          <div className="flex items-center gap-3">
+            <span className="hidden text-sm text-slate-500 md:block">{t(persona.roleKey)}</span>
+            <button
+              type="button"
+              onClick={() => setLang(lang === 'en' ? 'fa' : 'en')}
+              className="rounded border border-line-300 bg-white px-2.5 py-1 text-xs text-ink-700 transition-colors hover:border-signal-600 hover:text-signal-600"
+            >
+              {t('login.faButton')}
+            </button>
+          </div>
         </header>
 
         <main className="flex-1 px-6 py-6 pb-24 md:pb-8">{screen}</main>
       </div>
 
-      <BottomTabBar isHubUser={persona.isHubUser} notificationCount={persona.notificationCount} />
+      <BottomTabBarI18n isHubUser={persona.isHubUser} notificationCount={persona.notificationCount} />
     </div>
   );
 }

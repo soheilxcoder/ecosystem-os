@@ -1,29 +1,11 @@
 /**
- * Notifications — the inbox, adapted from the live page: urgency chips,
- * unread highlighting, tabs and the preferences matrix.
+ * Notifications — the inbox: urgency chips, unread highlighting, tabs and
+ * the preferences matrix. Fully bilingual.
  */
 import { StatusChip } from '../../../components/ui/StatusChip';
 import { NOTIFICATIONS, TODAY } from '../data';
-
-function urgencyTone(urgency: string): 'alert' | 'watch' | 'neutral' {
-  if (urgency === 'urgent') return 'alert';
-  if (urgency === 'high') return 'watch';
-  return 'neutral';
-}
-
-function urgencyLabel(urgency: string): string {
-  if (urgency === 'urgent') return 'Urgent';
-  if (urgency === 'high') return 'High';
-  return 'Info';
-}
-
-function timeAgo(iso: string): string {
-  const minutes = Math.max(1, Math.round((Date.parse(TODAY) - Date.parse(iso)) / 60_000));
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.round(hours / 24);
-  return `${days}d ago`;
-}
+import { useI18n } from '../i18n';
+import type { StringKey } from '../i18n/translations';
 
 const DEEP_LINKS: Record<string, string | undefined> = {
   'review.reminder': '/review',
@@ -34,23 +16,41 @@ const DEEP_LINKS: Record<string, string | undefined> = {
 };
 
 export function NotificationsScreen() {
+  const { t, num } = useI18n();
   const unread = NOTIFICATIONS.filter((n) => !n.read).length;
   const needsAction = NOTIFICATIONS.filter((n) => n.urgency === 'urgent');
+
+  const urgencyTone = (urgency: string) =>
+    urgency === 'urgent' ? 'alert' : urgency === 'high' ? 'watch' : 'neutral';
+  const urgencyLabel = (urgency: string): string =>
+    urgency === 'urgent'
+      ? t('notifications.urgent')
+      : urgency === 'high'
+        ? t('notifications.high')
+        : t('notifications.info');
+
+  const timeAgo = (iso: string): string => {
+    const minutes = Math.max(1, Math.round((Date.parse(TODAY) - Date.parse(iso)) / 60_000));
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return t('notifications.agoHours', { n: num(hours) });
+    const days = Math.round(hours / 24);
+    return t('notifications.agoDays', { n: num(days) });
+  };
 
   return (
     <div className="mx-auto max-w-3xl">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl text-ink-950">Notifications</h1>
+          <h1 className="font-display text-2xl text-ink-950">{t('notifications.h1')}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {unread > 0 ? `${unread} unread` : 'You are all caught up'}
+            {unread > 0 ? t('notifications.unread', { n: num(unread) }) : t('notifications.caughtUp')}
           </p>
         </div>
         <button
           type="button"
           className="rounded border border-line-300 bg-white px-3 py-1.5 text-sm text-ink-700 hover:border-signal-600 hover:text-signal-600"
         >
-          Mark all read
+          {t('notifications.markAll')}
         </button>
       </header>
 
@@ -59,10 +59,10 @@ export function NotificationsScreen() {
           aria-current="page"
           className="-mb-px border-b-2 border-signal-600 px-3 py-2 text-sm font-medium text-signal-600"
         >
-          All
+          {t('notifications.tabAll')}
         </span>
         <span className="-mb-px border-b-2 border-transparent px-3 py-2 text-sm font-medium text-slate-500">
-          Needs action ({needsAction.length})
+          {t('notifications.tabAction', { n: num(needsAction.length) })}
         </span>
       </nav>
 
@@ -80,15 +80,17 @@ export function NotificationsScreen() {
                   <StatusChip tone={urgencyTone(item.urgency)} label={urgencyLabel(item.urgency)} />
                   {!item.read && (
                     <span className="text-2xs font-medium uppercase tracking-wide text-signal-600">
-                      New
+                      {t('notifications.new')}
                     </span>
                   )}
                   <span className="text-2xs text-slate-500">{timeAgo(item.createdAt)}</span>
                 </div>
                 <p className={`mt-1.5 text-sm ${item.read ? 'text-ink-700' : 'font-medium text-ink-950'}`}>
-                  {item.title}
+                  {t(`notification.${item.id}.title` as StringKey)}
                 </p>
-                <p className="mt-0.5 text-xs text-slate-500">{item.body}</p>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  {t(`notification.${item.id}.body` as StringKey)}
+                </p>
               </div>
 
               {DEEP_LINKS[item.kind] && (
@@ -96,7 +98,7 @@ export function NotificationsScreen() {
                   href={`#${DEEP_LINKS[item.kind]}`}
                   className="shrink-0 rounded bg-signal-600 px-3 py-1 text-2xs font-medium text-white hover:bg-signal-700"
                 >
-                  Open
+                  {t('notifications.open')}
                 </a>
               )}
             </div>
@@ -106,35 +108,32 @@ export function NotificationsScreen() {
 
       <section className="mt-10" aria-labelledby="prefs-heading">
         <h2 id="prefs-heading" className="font-display text-lg text-ink-950">
-          How you hear about things
+          {t('notifications.prefsH2')}
         </h2>
-        <p className="mt-1 max-w-prose text-sm text-slate-500">
-          Choose the channels for each urgency. Urgent items always reach you in-app — that row
-          cannot be turned off.
-        </p>
+        <p className="mt-1 max-w-prose text-sm text-slate-500">{t('notifications.prefsSub')}</p>
         <div className="mt-3 overflow-x-auto rounded border border-line-200 bg-white">
           <table className="w-full min-w-105 text-sm">
             <thead>
-              <tr className="border-b border-line-200 text-left text-xs text-slate-500">
-                <th scope="col" className="px-3 py-2 font-medium">Urgency</th>
-                <th scope="col" className="px-3 py-2 text-center font-medium">In-app</th>
-                <th scope="col" className="px-3 py-2 text-center font-medium">Email digest</th>
-                <th scope="col" className="px-3 py-2 text-center font-medium">Push</th>
+              <tr className="border-b border-line-200 text-start text-xs text-slate-500">
+                <th scope="col" className="px-3 py-2 text-start font-medium">{t('notifications.colUrgency')}</th>
+                <th scope="col" className="px-3 py-2 text-center font-medium">{t('notifications.colInApp')}</th>
+                <th scope="col" className="px-3 py-2 text-center font-medium">{t('notifications.colEmail')}</th>
+                <th scope="col" className="px-3 py-2 text-center font-medium">{t('notifications.colPush')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line-200">
               {[
-                { urgency: 'Urgent', channels: ['always', 'yes', 'yes'] },
-                { urgency: 'High', channels: ['on', 'yes', 'off'] },
-                { urgency: 'Info', channels: ['on', 'daily', 'off'] },
+                { urgency: t('notifications.urgent'), channels: ['notifications.channelAlways', 'notifications.channelYes', 'notifications.channelYes'] },
+                { urgency: t('notifications.high'), channels: ['notifications.channelOn', 'notifications.channelYes', 'notifications.channelOff'] },
+                { urgency: t('notifications.info'), channels: ['notifications.channelOn', 'notifications.channelDaily', 'notifications.channelOff'] },
               ].map((row) => (
                 <tr key={row.urgency}>
-                  <th scope="row" className="px-3 py-2 text-left font-normal text-ink-950">
+                  <th scope="row" className="px-3 py-2 text-start font-normal text-ink-950">
                     {row.urgency}
                   </th>
                   {row.channels.map((channel, i) => (
                     <td key={i} className="px-3 py-2 text-center text-xs text-ink-700">
-                      {channel}
+                      {t(channel as StringKey)}
                     </td>
                   ))}
                 </tr>

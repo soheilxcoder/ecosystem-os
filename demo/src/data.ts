@@ -16,13 +16,14 @@ export interface Persona {
   id: string;
   fullName: string;
   email: string;
-  roleLabel: string;
+  /** Translation key for the human role label. */
+  roleKey: 'role.podLeadAtlas' | 'role.coach' | 'role.hubArchitecture' | 'role.hubStrategic' | 'role.investor';
   roleType: string;
   isHubUser: boolean;
-  podNames: string[];
+  podIds: string[];
   notificationCount: number;
   urgentCount: number;
-  rotation: { role: string; start: string; end: string }[];
+  rotation: { seatKey: 'seat.Pod Lead' | 'seat.Pod Member' | 'seat.Coach' | 'seat.Architecture Hub' | 'seat.Strategic Interactions Hub' | 'seat.Investor'; start: string; end: string }[];
 }
 
 export const PERSONAS: Persona[] = [
@@ -30,64 +31,64 @@ export const PERSONAS: Persona[] = [
     id: 'lena',
     fullName: 'Lena Lead',
     email: 'lena@example.org',
-    roleLabel: 'Pod Lead — Pod Atlas',
+    roleKey: 'role.podLeadAtlas',
     roleType: 'pod_lead',
     isHubUser: false,
-    podNames: ['Pod Atlas'],
+    podIds: ['pod-atlas'],
     notificationCount: 3,
     urgentCount: 1,
     rotation: [
-      { role: 'Pod Lead', start: '2026-07-01', end: '2026-12-28' },
-      { role: 'Pod Member', start: '2026-01-01', end: '2026-12-28' },
+      { seatKey: 'seat.Pod Lead', start: '2026-07-01', end: '2026-12-28' },
+      { seatKey: 'seat.Pod Member', start: '2026-01-01', end: '2026-12-28' },
     ],
   },
   {
     id: 'cora',
     fullName: 'Cora Coach',
     email: 'cora@example.org',
-    roleLabel: 'Coach — Atlas, Cinder & Ember',
+    roleKey: 'role.coach',
     roleType: 'coach',
     isHubUser: false,
-    podNames: ['Pod Atlas', 'Pod Cinder', 'Pod Ember'],
+    podIds: ['pod-atlas', 'pod-cinder', 'pod-ember'],
     notificationCount: 2,
     urgentCount: 0,
-    rotation: [{ role: 'Coach', start: '2026-01-01', end: '2026-09-28' }],
+    rotation: [{ seatKey: 'seat.Coach', start: '2026-01-01', end: '2026-09-28' }],
   },
   {
     id: 'ari',
     fullName: 'Ari Architect',
     email: 'ari@example.org',
-    roleLabel: 'Architecture Hub',
+    roleKey: 'role.hubArchitecture',
     roleType: 'hub_architecture',
     isHubUser: true,
-    podNames: [],
+    podIds: [],
     notificationCount: 5,
     urgentCount: 2,
-    rotation: [{ role: 'Architecture Hub', start: '2026-01-01', end: '2027-01-01' }],
+    rotation: [{ seatKey: 'seat.Architecture Hub', start: '2026-01-01', end: '2027-01-01' }],
   },
   {
     id: 'sana',
     fullName: 'Sana Strategic',
     email: 'sana@example.org',
-    roleLabel: 'Strategic Interactions Hub',
+    roleKey: 'role.hubStrategic',
     roleType: 'hub_strategic',
     isHubUser: true,
-    podNames: [],
+    podIds: [],
     notificationCount: 1,
     urgentCount: 0,
-    rotation: [{ role: 'Strategic Interactions Hub', start: '2026-01-01', end: '2027-01-01' }],
+    rotation: [{ seatKey: 'seat.Strategic Interactions Hub', start: '2026-01-01', end: '2027-01-01' }],
   },
   {
     id: 'ilyas',
     fullName: 'Ilyas Investor',
     email: 'ilyas@example.org',
-    roleLabel: 'Investor — Holding Pars',
+    roleKey: 'role.investor',
     roleType: 'investor',
     isHubUser: false,
-    podNames: [],
+    podIds: [],
     notificationCount: 1,
     urgentCount: 0,
-    rotation: [{ role: 'Investor', start: '2026-01-01', end: '2027-01-01' }],
+    rotation: [{ seatKey: 'seat.Investor', start: '2026-01-01', end: '2027-01-01' }],
   },
 ];
 

@@ -1,0 +1,35 @@
+/**
+ * Demo-only styles layered over the production design system.
+ *
+ * Persian mode (`html.lang-fa`) swaps the type stack via the same CSS custom
+ * properties the Tailwind config already reads, mirrors the DataCard's ledger
+ * accent for RTL, and relaxes letter-spacing (tracking hurts Arabic script).
+ */
+
+html.lang-fa {
+  --font-sans: 'Vazirmatn', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Vazirmatn', 'Source Serif 4', ui-serif, serif;
+}
+
+/* Persian does not use letter-spacing; the Arabic script connects letters. */
+html.lang-fa .tracking-wide,
+html.lang-fa .uppercase {
+  letter-spacing: 0;
+}
+
+/* DataCard: the 2px ledger accent flips to the inline-start edge in RTL. */
+html[dir='rtl'] .data-card {
+  border-left: 1px solid var(--line-200);
+  border-right: 2px solid var(--status-neutral);
+}
+
+/* The Phase Legend's accent bar flips with direction. */
+html[dir='rtl'] .phase-legend-item {
+  border-left-width: 0;
+  border-right-width: 2px;
+}
+
+/* Slightly looser leading helps Persian readability in dense meta text. */
+html.lang-fa .text-2xs {
+  line-height: 1.4;
+}

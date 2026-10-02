@@ -1,67 +1,72 @@
 /**
- * Investor view — the Strategic Hub's published report, as an investor sees
- * it: holdings, the cycle's headline numbers and the published documents.
+ * Investor view — the Strategic Hub's published report. Fully bilingual.
  */
 import Link from '../shims/link';
-import { DataCard } from '../../../components/ui/DataCard';
 import { StatusChip } from '../../../components/ui/StatusChip';
-import { HOLDINGS, PODS, TOTAL_POOL, money } from '../data';
+import { DataCardI18n } from '../components/primitives';
+import { HOLDINGS, PODS, TOTAL_POOL } from '../data';
+import { useI18n } from '../i18n';
+import { useNames } from '../i18n/names';
 
 export function InvestorScreen() {
+  const { t, num, money } = useI18n();
+  const names = useNames();
+
   return (
     <div className="mx-auto max-w-6xl">
       <header className="mb-6">
-        <h1 className="font-display text-2xl text-ink-950">Investor reporting</h1>
-        <p className="mt-1 max-w-prose text-sm text-slate-500">
-          Investors see what the Strategic Interactions Hub publishes — never raw coaching notes or
-          draft scores. This is the Q3 report for Holding Pars.
-        </p>
+        <h1 className="font-display text-2xl text-ink-950">{t('investor.h1')}</h1>
+        <p className="mt-1 max-w-prose text-sm text-slate-500">{t('investor.sub')}</p>
       </header>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <DataCard
-          label="Cycle 3 pool"
+        <DataCardI18n
+          label={t('investor.pool')}
           value={money(TOTAL_POOL)}
           tone="active"
-          hint="Set by the Architecture Hub, divided by formula."
+          hint={t('investor.poolHint')}
         />
-        <DataCard
-          label="Pods in Holding Pars"
-          value={PODS.filter((p) => p.holdingName === 'Holding Pars').length}
+        <DataCardI18n
+          label={t('investor.podsPars')}
+          value={num(PODS.filter((p) => p.holdingName === 'Holding Pars').length)}
           tone="neutral"
-          hint="Atlas, Basalt and Cinder."
+          hint={t('investor.podsParsHint')}
         />
-        <DataCard
-          label="Average Unit Score"
-          value={70.9}
+        <DataCardI18n
+          label={t('investor.avgScore')}
+          value={num(70.9, 1)}
           tone="good"
-          hint="Across the five pods, up from 68.4 in cycle 2."
+          hint={t('investor.avgScoreHint')}
         />
-        <DataCard
-          label="Days of cycle left"
-          value={28}
+        <DataCardI18n
+          label={t('investor.daysLeft')}
+          value={num(28)}
           tone="neutral"
-          hint="Results announced Days 89–90."
+          hint={t('investor.daysLeftHint')}
         />
       </div>
 
       <section className="mt-6">
-        <h2 className="mb-2 text-sm font-medium text-ink-700">Your holdings</h2>
+        <h2 className="mb-2 text-sm font-medium text-ink-700">{t('investor.holdings')}</h2>
         <ul className="divide-y divide-line-200 border border-line-200 bg-white">
           {HOLDINGS.map((holding) => {
-            const pods = PODS.filter((p) => p.holdingName === holding.name);
+            const pods = PODS.filter((p) =>
+              holding.id === 'holding-pars' ? p.holdingName === 'Holding Pars' : p.holdingName === 'Holding Dena',
+            );
             return (
               <li key={holding.id} className="flex items-center justify-between gap-3 p-3">
                 <span className="min-w-0">
                   <span className="block truncate text-sm text-ink-950">
-                    {holding.name} ({holding.code})
+                    {names.holdingById(holding.id)} ({holding.code})
                   </span>
                   <span className="block text-xs text-slate-500">
-                    {pods.length} pods ·{' '}
-                    {money(pods.reduce((sum, pod) => sum + pod.finalBudget, 0))} provisional
+                    {t('investor.holdingMeta', {
+                      n: num(pods.length),
+                      amount: money(pods.reduce((sum, pod) => sum + pod.finalBudget, 0)),
+                    })}
                   </span>
                 </span>
-                <StatusChip tone="good" label="Reporting current" />
+                <StatusChip tone="good" label={t('investor.current')} />
               </li>
             );
           })}
@@ -69,29 +74,29 @@ export function InvestorScreen() {
       </section>
 
       <section className="mt-6">
-        <h2 className="mb-2 text-sm font-medium text-ink-700">Published reports</h2>
+        <h2 className="mb-2 text-sm font-medium text-ink-700">{t('investor.reports')}</h2>
         <ul className="divide-y divide-line-200 border border-line-200 bg-white">
           <li className="flex items-center justify-between gap-3 p-3">
             <span className="min-w-0">
-              <span className="block text-sm text-ink-950">Q3 2026 — Holding Pars</span>
-              <span className="block text-xs text-slate-500">Published 2026-09-15 · Strategic Hub</span>
+              <span className="block text-sm text-ink-950">{t('investor.q3')}</span>
+              <span className="block text-xs text-slate-500">{t('investor.q3Meta')}</span>
             </span>
-            <StatusChip tone="good" label="Published" />
+            <StatusChip tone="good" label={t('investor.published')} />
           </li>
           <li className="flex items-center justify-between gap-3 p-3">
             <span className="min-w-0">
-              <span className="block text-sm text-ink-950">Q4 2026 — Holding Pars</span>
-              <span className="block text-xs text-slate-500">In draft · not visible to investors yet</span>
+              <span className="block text-sm text-ink-950">{t('investor.q4')}</span>
+              <span className="block text-xs text-slate-500">{t('investor.q4Meta')}</span>
             </span>
-            <StatusChip tone="watch" label="Draft" />
+            <StatusChip tone="watch" label={t('investor.draft')} />
           </li>
         </ul>
         <p className="mt-3 text-xs text-slate-500">
-          Full calculation behind these numbers:{' '}
+          {t('investor.footer1')}{' '}
           <Link href="/budget" className="text-signal-600 underline">
-            Budget Market
+            {t('budget.h1')}
           </Link>
-          .
+          {t('investor.footer2')}
         </p>
       </section>
     </div>
