@@ -6,6 +6,7 @@ import { IconArchive, IconSearch } from '../../../components/ui/icons';
 import { StatusChip } from '../../../components/ui/StatusChip';
 import { ARCHIVE_ENTRIES } from '../data';
 import { useI18n } from '../i18n';
+import { useNames } from '../i18n/names';
 import type { StringKey } from '../i18n/translations';
 
 const ENTRIES: { titleKey: StringKey; descKey: StringKey; ctaKey: StringKey }[] = [
@@ -15,7 +16,8 @@ const ENTRIES: { titleKey: StringKey; descKey: StringKey; ctaKey: StringKey }[] 
 ];
 
 export function ArchiveScreen() {
-  const { t } = useI18n();
+  const { t, date } = useI18n();
+  const names = useNames();
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -32,7 +34,7 @@ export function ArchiveScreen() {
         {ENTRIES.map((entry) => (
           <div
             key={entry.titleKey}
-            className="group flex flex-col rounded border border-line-200 bg-surface-white p-4 transition-colors hover:border-signal-600"
+            className="group flex flex-col panel panel-hover p-4 transition-colors hover:border-signal-600"
           >
             <div className="flex items-center justify-between">
               <h2 className="font-display text-base text-ink-950">{t(entry.titleKey)}</h2>
@@ -49,12 +51,12 @@ export function ArchiveScreen() {
       <section className="mt-8">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm font-medium text-ink-700">{t('archive.index')}</h2>
-          <div className="flex items-center gap-2 rounded border border-line-200 bg-white px-3 py-1.5 text-xs text-slate-500">
+          <div className="flex items-center gap-2 panel px-3 py-1.5 text-xs text-slate-500">
             <IconSearch size={16} />
             <span>{t('archive.filter')}</span>
           </div>
         </div>
-        <ul className="mt-3 divide-y divide-line-200 border border-line-200 bg-white">
+        <ul className="mt-3 panel divide-y divide-line-200 overflow-hidden">
           {ARCHIVE_ENTRIES.map((entry) => (
             <li key={entry.id} className="flex items-start justify-between gap-3 p-3">
               <span className="min-w-0">
@@ -71,7 +73,7 @@ export function ArchiveScreen() {
                   label={t(`archive.type.${entry.entityType}` as StringKey)}
                 />
                 <span className="tabular text-2xs text-slate-500">
-                  {entry.occurredAt} · {entry.actor}
+                  {date(entry.occurredAt)} · {names.actor(entry.actor)}
                 </span>
               </span>
             </li>

@@ -19,9 +19,32 @@ export function DashboardScreen({ persona }: { persona: Persona }) {
       <header className="mb-6">
         <h1 className="font-display text-2xl text-ink-950">{t('dashboard.h1')}</h1>
         <p className="mt-1 max-w-prose text-sm text-slate-500">
-          {t('dashboard.signedIn', { name: persona.fullName, role: t(persona.roleKey) })}
+          {t('dashboard.signedIn', { name: names.personName(persona.fullName), role: t(persona.roleKey) })}
         </p>
       </header>
+
+      <section className="panel-hero mb-6 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-white/70">{t('shell.cycleStatus')}</p>
+            <p className="mt-1 font-display text-xl text-white">
+              {t('dashboard.heroTitle', { name: names.personName(persona.fullName) })}
+            </p>
+          </div>
+          <div className="w-full max-w-56">
+            <div className="flex items-baseline justify-between text-xs text-white/80">
+              <span>{t('calendar.dayShort', { day: num(62) })}</span>
+              <span>{t('calendar.dayShort', { day: num(90) })}</span>
+            </div>
+            <div className="hero-progress mt-1 h-2">
+              <span style={{ width: '68.9%' }} />
+            </div>
+            <p className="tabular mt-1 text-end text-2xs text-white/70">
+              {t('dashboard.heroProgress', { n: num(28) })}
+            </p>
+          </div>
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         <div className="lg:col-span-5">
@@ -110,7 +133,7 @@ export function DashboardScreen({ persona }: { persona: Persona }) {
         </section>
 
         <section className="lg:col-span-12">
-          <div className="border border-dashed border-line-300 bg-white p-4">
+          <div className="panel panel-dashed p-4">
             <h2 className="text-sm font-medium text-ink-700">{t('dashboard.next')}</h2>
             <p className="mt-1 max-w-prose text-sm text-slate-500">
               {t('dashboard.nextPrefix')}{' '}

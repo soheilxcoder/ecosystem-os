@@ -103,10 +103,7 @@ export function SidebarI18n({
           aria-expanded={holdingMenuOpen}
           className="flex w-full items-center gap-2 rounded px-1 py-1 text-start hover:bg-paper-100 xl:gap-2"
         >
-          <span
-            className="grid h-7 w-7 shrink-0 place-items-center rounded bg-signal-600 text-xs font-semibold text-white"
-            aria-hidden
-          >
+          <span className="brand-mark h-7 w-7 shrink-0 text-xs font-semibold" aria-hidden>
             {orgName.slice(0, 1).toUpperCase()}
           </span>
           <span className="hidden min-w-0 flex-1 xl:block">
@@ -315,7 +312,7 @@ export function BottomTabBarI18n({
 
   return (
     <nav
-      aria-label="Primary"
+      aria-label={t('nav.primary')}
       className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line-200 bg-white md:hidden"
     >
       {items.map((item) => {

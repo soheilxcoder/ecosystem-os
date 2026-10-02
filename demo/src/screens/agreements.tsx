@@ -181,7 +181,7 @@ export function AgreementsScreen({
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto border border-line-200 bg-white">
+        <div className="panel overflow-hidden">
           <table className="w-full min-w-150 text-start text-sm">
             <caption className="sr-only">{t('agreements.h1')}</caption>
             <thead className="border-b border-line-200 text-xs text-slate-500">

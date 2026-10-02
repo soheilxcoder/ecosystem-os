@@ -252,6 +252,63 @@ export function rotationLabelI18n(
   }
 }
 
+/* ----------------------------------------------------------- pipeline bar */
+
+/** Linear cycle bar — i18n copy of PipelineBar (the real one says "Day"). */
+export function PipelineBarI18n({
+  phases,
+  day,
+  totalDays,
+}: {
+  phases: PhaseDefinition[];
+  day: number;
+  totalDays: number;
+}) {
+  const { t, num } = useI18n();
+  const safeDay = Math.min(Math.max(day, 0), totalDays);
+
+  return (
+    <div>
+      <div className="flex h-6 w-full overflow-hidden border border-line-200 bg-white">
+        {phases.map((phase) => {
+          const length = phase.endDay - phase.startDay + 1;
+          const isCurrent = safeDay >= phase.startDay && safeDay <= phase.endDay;
+          const isElapsed = safeDay > phase.endDay;
+          return (
+            <div
+              key={phase.id}
+              className="relative flex items-center justify-center"
+              style={{
+                width: `${(length / totalDays) * 100}%`,
+                backgroundColor: isElapsed
+                  ? 'rgba(30,111,92,0.55)'
+                  : isCurrent
+                    ? 'var(--signal-600)'
+                    : 'var(--line-200)',
+                borderInlineEnd: '1px solid #FFFFFF',
+              }}
+              title={`${phase.name} — ${phase.startDay}–${phase.endDay}`}
+            >
+              {isCurrent ? (
+                <span className="text-[10px] font-medium text-white">
+                  {t('calendar.dayShort', { day: num(safeDay) })}
+                </span>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-1 flex justify-between text-2xs text-slate-500">
+        <span>{t('calendar.dayShort', { day: num(1) })}</span>
+        <span className="tabular">
+          {t('calendar.wheelLabel', { day: num(safeDay), total: num(totalDays) })}
+        </span>
+        <span>{t('calendar.dayShort', { day: num(totalDays) })}</span>
+      </div>
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------ phase legend */
 
 export function PhaseLegendI18n({

@@ -3,13 +3,12 @@
  * phase legend, milestones and pause days. Fully bilingual (phase names and
  * summaries come from the translation table; layout maths from core/calendar).
  */
-import { CycleWheel, PipelineBar } from '../../../components/calendar/CycleWheel';
+import { CycleWheel } from '../../../components/calendar/CycleWheel';
 import { StatusChip } from '../../../components/ui/StatusChip';
 import { phasesFor } from '../../../core/calendar';
 import type { PhaseDefinition } from '../../../core/calendar';
 import { daysBetween } from '../../../core/time';
-import { PhaseLegendI18n } from '../components/primitives';
-import { DataCardI18n } from '../components/primitives';
+import { DataCardI18n, PhaseLegendI18n, PipelineBarI18n } from '../components/primitives';
 import {
   CYCLE_DAY,
   CYCLE_END,
@@ -63,10 +62,10 @@ export function CalendarScreen() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <section className="lg:col-span-5">
-          <div className="border border-line-200 bg-white p-4">
+          <div className="panel panel-hover p-4">
             <CycleWheel phases={phases} day={CYCLE_DAY} totalDays={90} label={phase.name} />
             <div className="xs:hidden">
-              <PipelineBar phases={phases} day={CYCLE_DAY} totalDays={90} />
+              <PipelineBarI18n phases={phases} day={CYCLE_DAY} totalDays={90} />
             </div>
             <p className="mt-3 text-center text-xs text-slate-500">
               {t('calendar.wheelLabel', { day: num(CYCLE_DAY), total: num(90) })}
@@ -105,7 +104,7 @@ export function CalendarScreen() {
             hint={t('calendar.daysLeftCycle', { n: num(daysRemainingInCycle) })}
           />
 
-          <div className="border border-line-200 bg-white p-4">
+          <div className="panel panel-hover p-4">
             <h3 className="text-xs text-slate-500">{t('calendar.pauseDays')}</h3>
             <ul className="tabular mt-1 space-y-1 text-sm text-ink-950">
               <li>{date('2026-08-21')}</li>
@@ -115,7 +114,7 @@ export function CalendarScreen() {
 
         <section className="lg:col-span-7">
           <h2 className="mb-2 text-sm font-medium text-ink-700">{t('calendar.milestones')}</h2>
-          <ul className="divide-y divide-line-200 border border-line-200 bg-white">
+          <ul className="panel divide-y divide-line-200 overflow-hidden">
             {upcoming.length === 0 ? (
               <li className="p-4 text-sm text-slate-500">{t('calendar.none')}</li>
             ) : (
@@ -147,7 +146,7 @@ export function CalendarScreen() {
 
         <section className="lg:col-span-5">
           <h2 className="mb-2 text-sm font-medium text-ink-700">{t('calendar.pods')}</h2>
-          <ul className="divide-y divide-line-200 border border-line-200 bg-white">
+          <ul className="panel divide-y divide-line-200 overflow-hidden">
             {PODS.map((pod) => (
               <li key={pod.id} className="flex items-center justify-between gap-3 p-3">
                 <span className="min-w-0">

@@ -1,20 +1,35 @@
 /**
- * Demo-only styles layered over the production design system.
+ * Demo-only presentation layer on top of the production design system.
  *
- * Persian mode (`html.lang-fa`) swaps the type stack via the same CSS custom
- * properties the Tailwind config already reads, mirrors the DataCard's ledger
- * accent for RTL, and relaxes letter-spacing (tracking hurts Arabic script).
+ * Two jobs:
+ *   1. Persian mode — swap the type stack via the same CSS custom properties
+ *      Tailwind already reads, mirror ledger accents for RTL, relax tracking.
+ *   2. Showcase polish — softer surfaces, gentle depth, micro-interactions and
+ *      a tinted page background. Nothing here changes behaviour; every chart
+ *      (wheel, pipeline, allocation bar, arithmetic strip, graph) is intact.
  */
+
+/* ------------------------------------------------------------ Persian ----- */
 
 html.lang-fa {
   --font-sans: 'Vazirmatn', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Vazirmatn', 'Source Serif 4', ui-serif, serif;
 }
 
-/* Persian does not use letter-spacing; the Arabic script connects letters. */
+/* Persian connects its letters — letter-spacing hurts it. */
 html.lang-fa .tracking-wide,
 html.lang-fa .uppercase {
   letter-spacing: 0;
+}
+
+/* Persian needs a little more room to breathe, vertically. */
+html.lang-fa h1,
+html.lang-fa h2,
+html.lang-fa h3 {
+  line-height: 1.6;
+}
+html.lang-fa .text-2xs {
+  line-height: 1.5;
 }
 
 /* DataCard: the 2px ledger accent flips to the inline-start edge in RTL. */
@@ -23,13 +38,160 @@ html[dir='rtl'] .data-card {
   border-right: 2px solid var(--status-neutral);
 }
 
-/* The Phase Legend's accent bar flips with direction. */
+/* Phase Legend accent bar flips with direction. */
 html[dir='rtl'] .phase-legend-item {
   border-left-width: 0;
   border-right-width: 2px;
 }
 
-/* Slightly looser leading helps Persian readability in dense meta text. */
-html.lang-fa .text-2xs {
-  line-height: 1.4;
+/* ------------------------------------------------------------- polish ----- */
+
+/* Tinted page background: paper with two quiet radial washes. */
+.demo-bg {
+  background-color: var(--paper-100);
+  background-image:
+    radial-gradient(1100px 520px at 85% -10%, rgba(30, 111, 92, 0.09), transparent 62%),
+    radial-gradient(850px 460px at -12% 108%, rgba(43, 108, 176, 0.07), transparent 58%);
+  background-attachment: fixed;
+}
+
+/* Panel — the soft card every section sits on. */
+.panel {
+  background: var(--surface-white);
+  border: 1px solid var(--line-200);
+  border-radius: 0.65rem;
+  box-shadow: 0 1px 2px rgba(18, 22, 28, 0.05);
+}
+
+/* Panel variants — declared after `.panel` so their longhand properties win
+   over the `border` shorthand above. */
+.panel-accent {
+  border-inline-start: 2px solid var(--signal-600);
+}
+.panel-dashed {
+  border-style: dashed;
+  border-color: var(--line-300);
+}
+
+.panel-hover {
+  transition:
+    box-shadow 0.18s ease,
+    transform 0.18s ease,
+    border-color 0.18s ease;
+}
+.panel-hover:hover {
+  border-color: var(--line-300);
+  box-shadow: 0 14px 34px -20px rgba(18, 22, 28, 0.38);
+  transform: translateY(-1px);
+}
+.panel-accent.panel-hover:hover {
+  border-inline-start-color: var(--signal-600);
+}
+
+/* Data cards keep their ledger accent but join the rounded, lift-on-hover set. */
+.data-card {
+  border-radius: 0.65rem;
+  transition:
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+.data-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px -20px rgba(18, 22, 28, 0.35);
+}
+
+/* Hero panel — the deep-signal gradient used for welcome banners. */
+.panel-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.9rem;
+  color: #fff;
+  background: linear-gradient(118deg, #14503f 0%, #1e6f5c 52%, #2c8471 100%);
+  box-shadow: 0 22px 44px -24px rgba(23, 88, 74, 0.6);
+}
+.panel-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(460px 220px at 84% 14%, rgba(255, 255, 255, 0.16), transparent 62%),
+    radial-gradient(300px 180px at 8% 110%, rgba(255, 255, 255, 0.08), transparent 60%);
+}
+.panel-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Brand mark — the little gradient tile with the platform initial. */
+.brand-mark {
+  display: grid;
+  place-items: center;
+  border-radius: 0.8rem;
+  color: #fff;
+  background: linear-gradient(135deg, #17584a 0%, #1e6f5c 55%, #35917d 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 8px 18px -10px rgba(23, 88, 74, 0.7);
+}
+
+/* Screen transitions — content glides in on route / language change. */
+.screen-enter {
+  animation: demo-rise 0.32s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+@keyframes demo-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Login personas slide forward on hover. */
+.persona-row {
+  transition:
+    background-color 0.16s ease,
+    transform 0.16s ease;
+}
+.persona-row:hover {
+  transform: translateX(2px);
+}
+html[dir='rtl'] .persona-row:hover {
+  transform: translateX(-2px);
+}
+
+/* Interactive chrome gets a gentle transition everywhere. */
+.demo-bg a,
+.demo-bg button,
+.demo-bg summary {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: 0.16s;
+  transition-timing-function: ease;
+}
+
+/* Progress shimmer for the hero cycle bar. */
+.hero-progress {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.hero-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72));
+  transition: width 0.6s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-enter,
+  .panel-hover,
+  .data-card,
+  .persona-row {
+    animation: none !important;
+    transition: none !important;
+  }
 }

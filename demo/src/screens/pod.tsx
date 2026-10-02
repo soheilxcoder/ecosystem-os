@@ -12,14 +12,14 @@ import type { StringKey } from '../i18n/translations';
 
 const MEMBERS: Record<string, { name: string; seatKey: StringKey; since: string }[]> = {
   'pod-atlas': [
-    { name: 'Lena Lead', seatKey: 'seat.Pod Lead', since: '2026-01' },
-    { name: 'Mara Voss', seatKey: 'member.seatDelivery', since: '2026-02' },
-    { name: 'Kian Tehrani', seatKey: 'member.seatDelivery', since: '2026-02' },
-    { name: 'Sasha Reid', seatKey: 'member.seatQuality', since: '2026-03' },
-    { name: 'Noor Haddad', seatKey: 'member.seatQuality', since: '2026-04' },
-    { name: 'Emil Sørensen', seatKey: 'member.seatDelivery', since: '2026-05' },
-    { name: 'Priya Anand', seatKey: 'member.seatClient', since: '2026-06' },
-    { name: 'Tomás Reyes', seatKey: 'member.seatDelivery', since: '2026-07' },
+    { name: 'Lena Lead', seatKey: 'seat.Pod Lead', since: '2026-01-05' },
+    { name: 'Mara Voss', seatKey: 'member.seatDelivery', since: '2026-02-01' },
+    { name: 'Kian Tehrani', seatKey: 'member.seatDelivery', since: '2026-02-12' },
+    { name: 'Sasha Reid', seatKey: 'member.seatQuality', since: '2026-03-03' },
+    { name: 'Noor Haddad', seatKey: 'member.seatQuality', since: '2026-04-18' },
+    { name: 'Emil Sørensen', seatKey: 'member.seatDelivery', since: '2026-05-09' },
+    { name: 'Priya Anand', seatKey: 'member.seatClient', since: '2026-06-22' },
+    { name: 'Tomás Reyes', seatKey: 'member.seatDelivery', since: '2026-07-14' },
   ],
 };
 
@@ -50,8 +50,8 @@ export function PodScreen({ podId }: { podId: string }) {
         <p className="mt-1 text-sm text-slate-500">
           {t('pod.holdingLeadCoach', {
             holding: names.holdingByName(pod.holdingName),
-            lead: pod.leadName,
-            coach: pod.coachName,
+            lead: names.personName(pod.leadName),
+            coach: names.personName(pod.coachName),
           })}
         </p>
       </header>
@@ -92,7 +92,8 @@ export function PodScreen({ podId }: { podId: string }) {
 }
 
 function PodOverview({ pod }: { pod: PodSample }) {
-  const { t, num, money } = useI18n();
+  const { t, num, money, date } = useI18n();
+  const names = useNames();
   const latest = PITCH_HISTORY[0]!;
 
   return (
@@ -110,7 +111,7 @@ function PodOverview({ pod }: { pod: PodSample }) {
         hint={t('pod.unitScoreHint')}
         provenance={{
           source: 'unit_score (calculated)',
-          updatedAt: '2026-09-28',
+          updatedAt: date('2026-09-28'),
           formula: `(0.40 × ${pod.components.financial}) + (0.35 × ${pod.components.peer_review}) + (0.25 × ${pod.components.strategic})`,
           reference: '05-MODULE-BUDGET-MARKET.md',
         }}
@@ -122,7 +123,7 @@ function PodOverview({ pod }: { pod: PodSample }) {
         hint={t('pod.provBudgetHint', { share: num(pod.shareOfPoolPercent, 1) })}
       />
 
-      <section className="border border-line-200 bg-white p-4 md:col-span-2 lg:col-span-2">
+      <section className="panel panel-hover p-4 md:col-span-2 lg:col-span-2">
         <h2 className="text-sm font-medium text-ink-950">{t('pod.latestPitch')}</h2>
         <p className="mt-1 text-sm text-ink-700">{t(latest.titleKey)}</p>
         <p className="mt-2 text-sm text-slate-500">{t(latest.summaryKey)}</p>
@@ -131,12 +132,12 @@ function PodOverview({ pod }: { pod: PodSample }) {
         </p>
       </section>
 
-      <section className="border border-line-200 bg-white p-4">
+      <section className="panel panel-hover p-4">
         <h2 className="text-sm font-medium text-ink-950">{t('pod.health')}</h2>
         <div className="mt-2 flex items-center gap-2">
           <StatusChip
             tone={pod.signal.level === 'green' ? 'good' : pod.signal.level === 'amber' ? 'watch' : 'alert'}
-            label={pod.signal.level}
+            label={names.signal(pod.signal.level)}
           />
           <span className="tabular text-sm text-ink-950">{num(pod.signal.score)} / 100</span>
         </div>
@@ -147,21 +148,21 @@ function PodOverview({ pod }: { pod: PodSample }) {
 }
 
 function PodMembers({ pod }: { pod: PodSample }) {
-  const { t } = useI18n();
+  const { t, date } = useI18n();
   const names = useNames();
   const members = MEMBERS[pod.id] ?? MEMBERS['pod-atlas']!;
   return (
-    <ul className="divide-y divide-line-200 border border-line-200 bg-white">
+    <ul className="panel divide-y divide-line-200 overflow-hidden">
       {members.slice(0, pod.memberCount).map((member) => (
         <li key={member.name} className="flex items-center justify-between gap-3 p-3">
           <span className="min-w-0">
-            <span className="block truncate text-sm text-ink-950">{member.name}</span>
+            <span className="block truncate text-sm text-ink-950">{names.personName(member.name)}</span>
             <span className="block truncate text-xs text-slate-500">
               {t('pod.seat', { seat: names.seat(member.seatKey) })}
             </span>
           </span>
           <span className="tabular shrink-0 text-xs text-slate-500">
-            {t('pod.since', { m: member.since })}
+            {t('pod.since', { m: date(member.since) })}
           </span>
         </li>
       ))}
@@ -175,7 +176,7 @@ function PodHistory({ pod }: { pod: PodSample }) {
   return (
     <ul className="space-y-3">
       {PITCH_HISTORY.map((pitch) => (
-        <li key={pitch.cycle} className="border border-line-200 bg-white p-4">
+        <li key={pitch.cycle} className="panel panel-hover p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-sm font-medium text-ink-950">{t(pitch.titleKey)}</h3>
             <StatusChip tone="good" label={t('pitch.accepted')} />

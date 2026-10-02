@@ -148,7 +148,7 @@ export function LockChecklistI18n({
   cycleNumber,
   status,
   cycleDay,
-  phaseKey,
+  phaseName,
   inLockWindow,
   calculated,
   blockers,
@@ -158,7 +158,8 @@ export function LockChecklistI18n({
   cycleNumber: number;
   status: 'provisional' | 'locked';
   cycleDay: number | null;
-  phaseKey: string | null;
+  /** Translated phase label for the lock-window note. */
+  phaseName: string;
   inLockWindow: boolean;
   calculated: boolean;
   blockers: ChecklistBlocker[];
@@ -187,10 +188,7 @@ export function LockChecklistI18n({
       done: inLockWindow,
       note: inLockWindow
         ? cycleDay !== null
-          ? t('lock.row3In', {
-              day: num(cycleDay),
-              phase: phaseKey ? phaseKey.replace(/_/g, ' ') : '',
-            })
+          ? t('lock.row3In', { day: num(cycleDay), phase: phaseName })
           : t('lock.row3InPlain')
         : cycleDay !== null
           ? t('lock.row3Out', { day: num(cycleDay) })
@@ -268,8 +266,10 @@ export interface ComponentBarProps {
   score: number;
   weightedContribution: number;
   explanation: string | null;
-  normalizationMethod: string;
-  rawInputs: Record<string, unknown>;
+  /** Translated normalization label, e.g. «صدک داوری‌شدهٔ همتایان». */
+  normalizationLabel: string;
+  /** Pre-translated raw inputs for the audit details block. */
+  rawInputs: Array<{ label: string; value: string | number }>;
   calculatedAt?: string;
   estimated?: boolean;
   reference?: string;
@@ -316,9 +316,12 @@ export function ComponentSubBarsI18n({
                   +{num(component.weightedContribution, 2)}
                 </span>
                 <ProvenancePopoverI18n
-                  source={`${component.normalizationMethod.replace(/_/g, ' ')} — ${component.label.toLowerCase()}`}
+                  source={`${component.normalizationLabel} — ${component.label}`}
                   updatedAt={component.calculatedAt}
-                  formula={`${component.weight}% weight × ${component.score} raw score`}
+                  formula={t('breakdown.componentFormula', {
+                    weight: num(component.weight),
+                    score: num(component.score),
+                  })}
                   reference={component.reference}
                 />
               </div>

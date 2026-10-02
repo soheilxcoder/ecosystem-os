@@ -22,7 +22,7 @@ import { useNames } from '../i18n/names';
 const pod = PODS[0]!; // Pod Atlas — the showcase walks one pod end to end.
 
 export function BreakdownScreen() {
-  const { t, num, money, date, lang } = useI18n();
+  const { t, num, money, date } = useI18n();
   const names = useNames();
 
   const COMPONENTS: ComponentBarProps[] = [
@@ -32,14 +32,14 @@ export function BreakdownScreen() {
       score: pod.components.financial,
       weightedContribution: pod.components.financial * 0.4,
       explanation: t('component.financial.explanation'),
-      normalizationMethod: 'peer_reviewed_percentile',
-      rawInputs: {
-        on_time_deliveries: 41,
-        total_deliveries: 46,
-        disputed_value: '2.1%',
-        rework_rate: '4%',
-      },
-      calculatedAt: '2026-09-28',
+      normalizationLabel: t('norm.peer_reviewed_percentile'),
+      rawInputs: [
+        { label: t('data.onTimeDeliveries'), value: 41 },
+        { label: t('data.totalDeliveries'), value: 46 },
+        { label: t('data.disputedValue'), value: '2.1%' },
+        { label: t('data.reworkRate'), value: '4%' },
+      ],
+      calculatedAt: date('2026-09-28'),
       reference: '15-BUSINESS-RULES-APPENDIX.md',
     },
     {
@@ -48,9 +48,14 @@ export function BreakdownScreen() {
       score: pod.components.peer_review,
       weightedContribution: pod.components.peer_review * 0.35,
       explanation: t('component.peer_review.explanation'),
-      normalizationMethod: 'peer_reviewed_percentile',
-      rawInputs: { reviews_completed: 12, average_mark: 3.7, max_mark: 5, escalations: 0 },
-      calculatedAt: '2026-09-28',
+      normalizationLabel: t('norm.peer_reviewed_percentile'),
+      rawInputs: [
+        { label: t('data.reviewsCompleted'), value: 12 },
+        { label: t('data.averageMark'), value: 3.7 },
+        { label: t('data.maxMark'), value: 5 },
+        { label: t('data.escalations'), value: 0 },
+      ],
+      calculatedAt: date('2026-09-28'),
       reference: '15-BUSINESS-RULES-APPENDIX.md',
     },
     {
@@ -59,9 +64,13 @@ export function BreakdownScreen() {
       score: pod.components.strategic,
       weightedContribution: pod.components.strategic * 0.25,
       explanation: t('component.strategic.explanation'),
-      normalizationMethod: 'hub_scored',
-      rawInputs: { themes_matched: 6, themes_total: 8, pitch_acceptance: '75%' },
-      calculatedAt: '2026-09-27',
+      normalizationLabel: t('norm.hub_scored'),
+      rawInputs: [
+        { label: t('data.themesMatched'), value: 6 },
+        { label: t('data.themesTotal'), value: 8 },
+        { label: t('data.pitchAcceptance'), value: '75%' },
+      ],
+      calculatedAt: date('2026-09-27'),
       reference: '15-BUSINESS-RULES-APPENDIX.md',
     },
   ];
@@ -92,7 +101,7 @@ export function BreakdownScreen() {
         <StatusChip tone="watch" label={t('lock.provisional')} />
       </header>
 
-      <div className="rounded border border-line-200 bg-surface-white p-5">
+      <div className="panel panel-hover p-5">
         <p className="text-xs text-slate-500">{t('breakdown.heroLabel')}</p>
         <p className="mt-1 font-display text-4xl tabular-nums text-ink-950">{money(finalBudget)}</p>
         <p className="mt-1 text-sm text-slate-500">
@@ -123,24 +132,24 @@ export function BreakdownScreen() {
         <h2 id="components-heading" className="font-display text-xl text-ink-950">
           {t('breakdown.componentsH2')}
         </h2>
-        <div className="mt-3 rounded border border-line-200 bg-surface-white p-4">
+        <div className="mt-3 panel panel-hover p-4">
           <ComponentSubBarsI18n components={COMPONENTS} />
         </div>
 
         <div className="mt-4 space-y-3">
           {COMPONENTS.map((component) => (
-            <details key={component.label} className="rounded border border-line-200 bg-surface-white">
+            <details key={component.label} className="panel">
               <summary className="cursor-pointer px-4 py-2.5 text-sm text-ink-950">
                 {t('breakdown.rawInputs', { label: component.label })}
-                <span className="ms-2 text-xs text-slate-500">
-                  {t(`norm.${component.normalizationMethod}` as never)}
-                </span>
+                <span className="ms-2 text-xs text-slate-500">{component.normalizationLabel}</span>
               </summary>
               <dl className="grid grid-cols-1 gap-x-6 gap-y-1 border-t border-line-200 px-4 py-3 text-sm sm:grid-cols-2">
-                {Object.entries(component.rawInputs).map(([key, value]) => (
-                  <div key={key} className="flex justify-between gap-3">
-                    <dt className="text-slate-500">{key.replace(/_/g, ' ')}</dt>
-                    <dd className="font-mono tabular-nums text-ink-950">{String(value)}</dd>
+                {component.rawInputs.map((input) => (
+                  <div key={input.label} className="flex justify-between gap-3">
+                    <dt className="text-slate-500">{input.label}</dt>
+                    <dd className="font-mono tabular-nums text-ink-950">
+                      {typeof input.value === 'number' ? num(input.value, 1) : input.value}
+                    </dd>
                   </div>
                 ))}
               </dl>
@@ -153,7 +162,7 @@ export function BreakdownScreen() {
         <h2 id="arithmetic-heading" className="font-display text-xl text-ink-950">
           {t('breakdown.arithmeticH2')}
         </h2>
-        <div className="mt-3 rounded border border-line-200 bg-surface-white p-4">
+        <div className="mt-3 panel panel-hover p-4">
           <ArithmeticStrip
             clauses={COMPONENTS.map((component) => ({
               weight: component.weight / 100,
@@ -205,7 +214,7 @@ export function BreakdownScreen() {
           />
         </div>
 
-        <div className="mt-4 rounded border border-line-200 bg-surface-white">
+        <div className="panel mt-4 overflow-hidden">
           <table className="w-full text-sm">
             <caption className="sr-only">
               {names.podName(pod.id)} — {t('breakdown.h1', { pod: '' })}

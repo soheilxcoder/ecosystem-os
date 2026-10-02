@@ -16,7 +16,7 @@ const BLOCKERS: Array<{ reason: string; podId: string; detailKey: 'lock.detail.d
 ];
 
 export function BudgetScreen() {
-  const { t, num, money } = useI18n();
+  const { t, num, money, date } = useI18n();
   const names = useNames();
 
   return (
@@ -31,13 +31,13 @@ export function BudgetScreen() {
         <StatusChip tone="watch" label={t('budget.chip')} />
       </header>
 
-      <p className="mb-5 rounded border border-line-200 bg-surface-white px-4 py-2.5 text-sm text-slate-500">
+      <p className="mb-5 panel px-4 py-2.5 text-sm text-slate-500">
         {t('budget.intro')}
       </p>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         <section className="lg:col-span-8" aria-labelledby="allocation-heading">
-          <div className="rounded border border-line-200 bg-surface-white p-4">
+          <div className="panel panel-hover p-4">
             <h2 id="allocation-heading" className="font-display text-lg text-ink-950">
               {t('budget.allocationH2')}
             </h2>
@@ -66,7 +66,7 @@ export function BudgetScreen() {
               hint={t('budget.poolHint', { n: num(CYCLE_NUMBER) })}
               provenance={{
                 source: 'budget_cycle.total_pool',
-                updatedAt: '2026-09-21',
+                updatedAt: date('2026-09-21'),
                 formula: t('budget.poolProvFormula'),
                 reference: '05-MODULE-BUDGET-MARKET.md',
               }}
@@ -79,7 +79,7 @@ export function BudgetScreen() {
             />
           </div>
 
-          <div className="mt-4 overflow-x-auto rounded border border-line-200 bg-surface-white">
+          <div className="panel mt-4 overflow-hidden">
             <table className="w-full min-w-135 border-collapse text-sm">
               <caption className="px-3 py-2 text-start text-xs text-slate-500">
                 {t('budget.tableCaption', { n: num(CYCLE_NUMBER) })}
@@ -140,7 +140,7 @@ export function BudgetScreen() {
             cycleNumber={CYCLE_NUMBER}
             status="provisional"
             cycleDay={CYCLE_DAY}
-            phaseKey="execution"
+            phaseName={t('phaseShort.execution')}
             inLockWindow={false}
             calculated
             blockers={BLOCKERS.map((blocker) => ({
@@ -152,7 +152,7 @@ export function BudgetScreen() {
             canLock={false}
           />
 
-          <div className="rounded border border-line-200 bg-surface-white p-4">
+          <div className="panel panel-hover p-4">
             <h2 className="text-sm font-medium text-ink-950">{t('budget.whyH2')}</h2>
             <p className="mt-1 text-sm text-slate-500">
               {t('budget.whyText1')}{' '}

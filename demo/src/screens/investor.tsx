@@ -48,7 +48,7 @@ export function InvestorScreen() {
 
       <section className="mt-6">
         <h2 className="mb-2 text-sm font-medium text-ink-700">{t('investor.holdings')}</h2>
-        <ul className="divide-y divide-line-200 border border-line-200 bg-white">
+        <ul className="panel divide-y divide-line-200 overflow-hidden">
           {HOLDINGS.map((holding) => {
             const pods = PODS.filter((p) =>
               holding.id === 'holding-pars' ? p.holdingName === 'Holding Pars' : p.holdingName === 'Holding Dena',
@@ -75,7 +75,7 @@ export function InvestorScreen() {
 
       <section className="mt-6">
         <h2 className="mb-2 text-sm font-medium text-ink-700">{t('investor.reports')}</h2>
-        <ul className="divide-y divide-line-200 border border-line-200 bg-white">
+        <ul className="panel divide-y divide-line-200 overflow-hidden">
           <li className="flex items-center justify-between gap-3 p-3">
             <span className="min-w-0">
               <span className="block text-sm text-ink-950">{t('investor.q3')}</span>

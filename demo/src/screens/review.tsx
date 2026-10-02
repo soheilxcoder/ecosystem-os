@@ -25,13 +25,13 @@ export function ReviewScreen() {
       </header>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <section className="border-l-2 border-signal-600 bg-white p-4">
+        <section className="panel panel-hover panel-accent p-4">
           <h2 className="text-sm font-medium text-ink-950">{t('review.peerH2')}</h2>
           <p className="mt-1 text-sm text-slate-500">{t('review.peerAssigned', { n: num(2) })}</p>
           <p role="status" className="mt-2 text-sm text-status-watch">{t('review.windowClosed')}</p>
         </section>
 
-        <section className="border-l-2 border-signal-600 bg-white p-4">
+        <section className="panel panel-hover panel-accent p-4">
           <h2 className="text-sm font-medium text-ink-950">{t('review.conflictH2')}</h2>
           <p className="mt-1 text-sm text-slate-500">{t('review.conflictAssigned', { n: num(1) })}</p>
           <ul className="mt-3 space-y-2">
@@ -45,7 +45,7 @@ export function ReviewScreen() {
           </ul>
         </section>
 
-        <section className="border-l-2 border-signal-600 bg-white p-4">
+        <section className="panel panel-hover panel-accent p-4">
           <h2 className="text-sm font-medium text-ink-950">{t('review.govH2')}</h2>
           <p className="mt-1 text-sm text-slate-500">{t('review.govText')}</p>
           <p className="mt-2 text-xs text-slate-500">{t('review.cinderTrial')}</p>
@@ -54,7 +54,7 @@ export function ReviewScreen() {
 
       <section className="mt-6">
         <h2 className="mb-2 text-sm font-medium text-ink-700">{t('review.queue')}</h2>
-        <ul className="divide-y divide-line-200 border border-line-200 bg-white">
+        <ul className="panel divide-y divide-line-200 overflow-hidden">
           {QUEUE.map((item) => (
             <li key={item.id} className="flex items-center justify-between gap-3 p-3">
               <span className="min-w-0">
@@ -73,7 +73,7 @@ export function ReviewScreen() {
 
       <section className="mt-6">
         <h2 className="mb-2 text-sm font-medium text-ink-700">{t('review.tracks')}</h2>
-        <ul className="divide-y divide-line-200 border border-line-200 bg-white">
+        <ul className="panel divide-y divide-line-200 overflow-hidden">
           {PODS.map((pod) => (
             <li key={pod.id} className="flex items-center justify-between gap-3 p-3">
               <span className="min-w-0">

@@ -7,8 +7,9 @@ import { useState, type ReactNode } from 'react';
 import { usePathname } from './shims/navigation';
 import { SidebarI18n } from './components/layout';
 import { BottomTabBarI18n } from './components/layout';
-import { HOLDINGS, ORG_NAME, PERSONAS, type Persona } from './data';
+import { HOLDINGS, PERSONAS, type Persona } from './data';
 import { useI18n } from './i18n';
+import { useNames } from './i18n/names';
 import { LoginScreen } from './screens/login';
 import { DashboardScreen } from './screens/dashboard';
 import { PodScreen } from './screens/pod';
@@ -27,6 +28,7 @@ export function App({ initialPersona = null }: { initialPersona?: Persona | null
   const [persona, setPersona] = useState<Persona | null>(initialPersona);
   const pathname = usePathname();
   const { t, lang, setLang } = useI18n();
+  const names = useNames();
 
   if (!persona) {
     return <LoginScreen onSignIn={setPersona} />;
@@ -35,11 +37,11 @@ export function App({ initialPersona = null }: { initialPersona?: Persona | null
   const screen = route(pathname, persona);
 
   return (
-    <div className="flex min-h-screen bg-paper-100">
+    <div className="demo-bg flex min-h-screen">
       <SidebarI18n
-        userName={persona.fullName}
+        userName={names.personName(persona.fullName)}
         userEmail={persona.email}
-        orgName={ORG_NAME}
+        orgName={t('org.x')}
         holdings={HOLDINGS}
         activeHoldingId={HOLDINGS[0]!.id}
         isHubUser={persona.isHubUser}
@@ -76,7 +78,12 @@ export function App({ initialPersona = null }: { initialPersona?: Persona | null
           </div>
         </header>
 
-        <main className="flex-1 px-6 py-6 pb-24 md:pb-8">{screen}</main>
+        <main
+          key={`${pathname}:${lang}`}
+          className="screen-enter flex-1 px-6 py-6 pb-24 md:pb-8"
+        >
+          {screen}
+        </main>
       </div>
 
       <BottomTabBarI18n isHubUser={persona.isHubUser} notificationCount={persona.notificationCount} />

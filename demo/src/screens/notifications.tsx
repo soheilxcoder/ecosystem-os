@@ -111,7 +111,7 @@ export function NotificationsScreen() {
           {t('notifications.prefsH2')}
         </h2>
         <p className="mt-1 max-w-prose text-sm text-slate-500">{t('notifications.prefsSub')}</p>
-        <div className="mt-3 overflow-x-auto rounded border border-line-200 bg-white">
+        <div className="mt-3 panel overflow-hidden">
           <table className="w-full min-w-105 text-sm">
             <thead>
               <tr className="border-b border-line-200 text-start text-xs text-slate-500">

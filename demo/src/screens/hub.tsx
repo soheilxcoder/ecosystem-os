@@ -24,7 +24,7 @@ export function HubScreen({ persona }: { persona: Persona }) {
       )}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <section className="rounded border border-line-200 bg-surface-white p-4">
+        <section className="panel panel-hover p-4">
           <div className="flex items-start justify-between gap-2">
             <h2 className="font-display text-lg text-ink-950">{t('hub.arch')}</h2>
             <IconArrowRight size={16} className="mt-1 text-slate-500 rtl:-scale-x-100" />
@@ -36,7 +36,7 @@ export function HubScreen({ persona }: { persona: Persona }) {
           </div>
         </section>
 
-        <section className="rounded border border-line-200 bg-surface-white p-4">
+        <section className="panel panel-hover p-4">
           <div className="flex items-start justify-between gap-2">
             <h2 className="font-display text-lg text-ink-950">{t('hub.deploy')}</h2>
             <IconArrowRight size={16} className="mt-1 text-slate-500 rtl:-scale-x-100" />
@@ -48,7 +48,7 @@ export function HubScreen({ persona }: { persona: Persona }) {
           </div>
         </section>
 
-        <section className="rounded border border-line-200 bg-surface-white p-4">
+        <section className="panel panel-hover p-4">
           <div className="flex items-start justify-between gap-2">
             <h2 className="font-display text-lg text-ink-950">{t('hub.coaching')}</h2>
             <IconArrowRight size={16} className="mt-1 text-slate-500 rtl:-scale-x-100" />
@@ -60,7 +60,7 @@ export function HubScreen({ persona }: { persona: Persona }) {
           </div>
         </section>
 
-        <section className="rounded border border-line-200 bg-surface-white p-4">
+        <section className="panel panel-hover p-4">
           <div className="flex items-start justify-between gap-2">
             <h2 className="font-display text-lg text-ink-950">{t('hub.strategic')}</h2>
             <IconArrowRight size={16} className="mt-1 text-slate-500 rtl:-scale-x-100" />
@@ -73,7 +73,7 @@ export function HubScreen({ persona }: { persona: Persona }) {
         </section>
       </div>
 
-      <section className="mt-6 rounded border border-line-200 bg-surface-white p-4">
+      <section className="mt-6 panel panel-hover p-4">
         <h2 className="text-sm font-medium text-ink-950">{t('hub.notAdmin')}</h2>
         <p className="mt-1 max-w-prose text-sm text-slate-500">{t('hub.notAdminText')}</p>
       </section>
