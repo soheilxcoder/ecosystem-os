@@ -12,6 +12,8 @@
     "dev:api": "tsx watch --clear-screen=false server/index.ts",
     "dev:web": "next dev -H 0.0.0.0 -p 3000",
     "build": "next build",
+    "demo:build": "vite build --config demo/vite.config.ts",
+    "demo:preview": "vite preview --config demo/vite.config.ts",
     "start": "next start -H 0.0.0.0 -p 3000",
     "db:migrate": "tsx db/migrate.ts",
     "db:seed": "tsx db/seed.ts",

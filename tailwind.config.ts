@@ -13,6 +13,7 @@ const config: Config = {
     './app/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
     './lib/**/*.{ts,tsx}',
+    './demo/**/*.{ts,tsx}',
   ],
   theme: {
     extend: {
