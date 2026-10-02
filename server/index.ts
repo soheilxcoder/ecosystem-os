@@ -28,11 +28,21 @@ import { registerCalendarRoutes } from './routes/calendar';
 import { registerPodRoutes } from './routes/pods';
 import { registerAgreementRoutes } from './routes/agreements';
 import { registerReviewRoutes } from './routes/review';
+import { registerBudgetRoutes } from './routes/budget';
+import { registerCoachingRoutes } from './routes/coaching';
+import { registerNotificationRoutes } from './routes/notifications';
+import { registerArchiveRoutes } from './routes/archive';
+import { registerHubRoutes } from './routes/hub';
 import type { PodServiceContext } from './services/pods';
 import type { AgreementServiceContext } from './services/agreements';
 import type { ReviewServiceContext } from './services/review';
 import type { GovernanceServiceContext } from './services/governance';
+import type { BudgetServiceContext } from './services/budget';
+import type { CoachingServiceContext } from './services/coaching';
 import { startScheduler } from './jobs/scheduler';
+import { subscribeNotificationDispatcher } from './services/notifications';
+import { subscribeArchiveIndexer } from './services/archive';
+import { createRateLimiter, type RateLimiter } from './services/rate-limit';
 
 export interface ServerContext {
   db: Database;
@@ -40,6 +50,8 @@ export interface ServerContext {
   env: Env;
   authService: AuthService;
   today: () => ISODate;
+  /** Per-user write throttling for the public write surfaces (13 §6). */
+  rateLimiter: RateLimiter;
   close: () => Promise<void>;
 }
 
@@ -51,6 +63,8 @@ export interface CreateContextOptions {
   /** Apply migrations on boot (default true). */
   runMigrations?: boolean;
   logger?: boolean;
+  /** Tighten or loosen specific rate-limit buckets (tests). */
+  rateLimitOverrides?: Record<string, { max: number; windowMs: number }>;
 }
 
 export async function createServerContext(options: CreateContextOptions = {}): Promise<ServerContext> {
@@ -81,6 +95,14 @@ export async function createServerContext(options: CreateContextOptions = {}): P
     }
   });
 
+  // Phase 6: the same domain events fan out to two durable subscribers. The
+  // Notifications dispatcher routes "who is told"; the Archive indexer records
+  // "what is remembered". Because both subscribe to the one event stream, the
+  // two lists can never drift apart.
+  const dispatchContext = { db, today };
+  subscribeNotificationDispatcher(bus, dispatchContext);
+  subscribeArchiveIndexer(bus, dispatchContext);
+
   const authService = new AuthService({ db, bus, env });
 
   return {
@@ -89,6 +111,7 @@ export async function createServerContext(options: CreateContextOptions = {}): P
     env,
     authService,
     today,
+    rateLimiter: createRateLimiter(options.rateLimitOverrides),
     async close() {
       if (ownsDb) await db.close();
     },
@@ -123,6 +146,8 @@ export async function buildServer(options: BuildServerOptions = {}): Promise<Fas
   const agreementContext = (): AgreementServiceContext => ({ db, bus, today });
   const reviewContext = (): ReviewServiceContext => ({ db, bus, today });
   const governanceContext = (): GovernanceServiceContext => ({ db, bus, today });
+  const budgetContext = (): BudgetServiceContext => ({ db, bus, today });
+  const coachingContext = (): CoachingServiceContext => ({ db, bus, today });
 
   registerHealthRoutes(app, { db });
   registerAuthRoutes(app, { authService, db });
@@ -131,6 +156,11 @@ export async function buildServer(options: BuildServerOptions = {}): Promise<Fas
   registerPodRoutes(app, { db, today, podContext });
   registerAgreementRoutes(app, { db, today, agreementContext });
   registerReviewRoutes(app, { db, today, reviewContext, governanceContext });
+  registerBudgetRoutes(app, { db, today, budgetContext });
+  registerCoachingRoutes(app, { db, today, coachingContext });
+  registerNotificationRoutes(app, { db, today });
+  registerArchiveRoutes(app, { db, today });
+  registerHubRoutes(app, { db, bus, today });
 
   app.setNotFoundHandler((request, reply) => {
     void reply.code(404).send({
@@ -175,8 +205,13 @@ export async function buildServer(options: BuildServerOptions = {}): Promise<Fas
     if (statusCode >= 500) {
       request.log.error({ err: error, requestId: request.id }, 'Unhandled error');
     }
+    // A service error carries a machine-readable `code` alongside its status
+    // (`cycle_locked`, `blockers_unresolved`, `window_closed`, ...). Preserving
+    // it is what lets a screen explain a refusal instead of only showing one —
+    // two different 409s need two different messages.
+    const code = (error as { code?: string }).code;
     return reply.code(statusCode).send({
-      error: statusCode >= 500 ? 'internal_error' : 'request_error',
+      error: statusCode >= 500 ? 'internal_error' : (code ?? 'request_error'),
       message: statusCode >= 500 ? 'Something went wrong processing this request' : error.message,
       requestId: request.id,
     });

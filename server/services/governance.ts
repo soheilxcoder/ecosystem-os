@@ -708,6 +708,15 @@ export async function advanceStage(
   // org-configured one and it is never fewer than three people.
   if (input.to === 'correction_period') {
     await constitutePanel(context, openCase.id, input.podId, snapshot.orgId, settings.accountabilityPanelSize);
+    // Canonical trigger (11): "Panel vote requested" → every panel member.
+    await context.bus.publish({
+      type: 'governance.panel_vote_requested',
+      aggregateType: 'accountability_case',
+      aggregateId: openCase.id,
+      orgId: snapshot.orgId,
+      actorUserId: input.actorUserId,
+      payload: { podId: input.podId },
+    } as any);
   }
 
   await recordAudit(context.db, {
@@ -717,6 +726,17 @@ export async function advanceStage(
     entityId: openCase.id,
     metadata: { from: openCase.currentStage, to: input.to },
   });
+
+  // Canonical trigger (11): "Accountability Path stage advanced" → the pod's
+  // members, its coach, and any constituted panel.
+  await context.bus.publish({
+    type: 'governance.accountability_stage_advanced',
+    aggregateType: 'accountability_case',
+    aggregateId: openCase.id,
+    orgId: snapshot.orgId,
+    actorUserId: input.actorUserId,
+    payload: { podId: input.podId, from: openCase.currentStage, to: input.to },
+  } as any);
 
   return getAccountabilityView(context, input.podId);
 }

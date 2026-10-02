@@ -8,9 +8,14 @@
  */
 
 import type { Database } from '../../db/client';
-import { queryMany } from '../../db/client';
+import { queryMany, queryOne } from '../../db/client';
 import { autoSubmitExpiredPitches, type PodServiceContext } from '../services/pods';
-import { listReminders } from '../../db/repositories/calendar';
+import {
+  listDueReminders,
+  listReminders,
+  markReminderNotified,
+} from '../../db/repositories/calendar';
+import { listTrialsDue } from '../../db/repositories/governance';
 
 export interface SchedulerOptions {
   /** Sweep interval in milliseconds. */
@@ -47,6 +52,24 @@ export function startScheduler(
       log(`auto-submit sweep failed: ${(error as Error).message}`);
     }
 
+    try {
+      const announced = await emitDueMilestoneReminders(context);
+      if (announced > 0) {
+        log(`announced ${announced} milestone reminder(s) now due`);
+      }
+    } catch (error) {
+      log(`milestone reminder sweep failed: ${(error as Error).message}`);
+    }
+
+    try {
+      const trials = await emitDueEntryTrials(context, orgIds);
+      if (trials > 0) {
+        log(`flagged ${trials} entry-trial decision(s) now due`);
+      }
+    } catch (error) {
+      log(`entry-trial sweep failed: ${(error as Error).message}`);
+    }
+
     await refreshMilestoneDates(context.db, log);
   }
 
@@ -64,6 +87,80 @@ export function startScheduler(
     },
     runOnce,
   };
+}
+
+/**
+ * Announce any milestone whose target date has arrived.
+ *
+ * The four day-window triggers from Module 11 (rotation window, pitch window,
+ * auto-submit warning, review deadline) are not produced by a user action, so
+ * this sweep is their emitter. Each due reminder becomes a
+ * `calendar.milestone_reached` event on the shared bus — the Notifications
+ * dispatcher routes it to the right people — and is then flagged `notified`,
+ * which is what makes the sweep idempotent. The `results` milestone is skipped:
+ * `budget.cycle_locked` already announces the results.
+ */
+async function emitDueMilestoneReminders(context: PodServiceContext): Promise<number> {
+  const due = await listDueReminders(context.db, context.today());
+  let announced = 0;
+  for (const reminder of due) {
+    if (reminder.milestoneType === 'results') {
+      // Announced by the budget lock itself; just mark it handled.
+      await markReminderNotified(context.db, reminder.id);
+      continue;
+    }
+    await context.bus.publish({
+      type: 'calendar.milestone_reached',
+      aggregateType: 'sprint_cycle',
+      aggregateId: reminder.cycleId,
+      orgId: reminder.orgId,
+      actorUserId: null,
+      payload: {
+        milestoneType: reminder.milestoneType,
+        cycleId: reminder.cycleId,
+        targetDate: reminder.targetDate,
+      },
+    });
+    await markReminderNotified(context.db, reminder.id);
+    announced += 1;
+  }
+  return announced;
+}
+
+/**
+ * Announce any 90-day entry trial whose decision date has arrived.
+ *
+ * Trials have no `notified` flag, so idempotence is checked against the
+ * notification table itself: a trial gets exactly one `entry_trial_decision_due`
+ * item, and later ticks see it and move on. The event is published through the
+ * bus like everything else, so the outbox records it and the dispatcher routes
+ * it to the Deployment Hub and the pod.
+ */
+async function emitDueEntryTrials(context: PodServiceContext, orgIds: string[]): Promise<number> {
+  let flagged = 0;
+  for (const orgId of orgIds) {
+    const trials = await listTrialsDue(context.db, orgId, context.today());
+    for (const trial of trials) {
+      const existing = await queryOne<{ n: string }>(
+        context.db,
+        `SELECT COUNT(*)::text AS n FROM notification
+          WHERE trigger_type = 'entry_trial_decision_due' AND related_entity_id = $1`,
+        [trial.id],
+      );
+      if (Number(existing?.n ?? 0) > 0) continue;
+
+      await context.bus.publish({
+        type: 'governance.entry_trial_due',
+        aggregateType: 'entry_trial',
+        aggregateId: trial.id,
+        orgId,
+        actorUserId: null,
+        payload: { trialId: trial.id, podId: trial.podId, dueDate: trial.decisionDueDate },
+      });
+      flagged += 1;
+    }
+  }
+  return flagged;
 }
 
 /** Recompute reminders when pause days move a milestone. */

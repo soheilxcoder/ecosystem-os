@@ -69,23 +69,51 @@ export interface CreatePodInput {
   categoryTag?: string | null;
   status?: PodStatus;
   trialEndDate?: ISODate | null;
+  /**
+   * One month of fixed costs — the Survival Budget floor's input
+   * (15-BUSINESS-RULES-APPENDIX). Defaults to zero, which is the honest value
+   * for a pod nobody has given a cost base yet; the budget screen then shows a
+   * floor of zero rather than inventing one.
+   */
+  monthlyFixedCosts?: number;
 }
 
 export async function createPod(db: Queryable, input: CreatePodInput): Promise<Pod> {
   return toPod(
     await insertOne(
       db,
-      `INSERT INTO pod (holding_id, name, category_tag, status, trial_end_date)
-       VALUES ($1, $2, $3, $4, $5::date) RETURNING *`,
+      `INSERT INTO pod (holding_id, name, category_tag, status, trial_end_date, monthly_fixed_costs)
+       VALUES ($1, $2, $3, $4, $5::date, $6) RETURNING *`,
       [
         input.holdingId,
         input.name,
         input.categoryTag ?? null,
         input.status ?? 'trial',
         input.trialEndDate ?? null,
+        input.monthlyFixedCosts ?? 0,
       ],
     ),
   );
+}
+
+/**
+ * Update the survival floor's input.
+ *
+ * Deliberately separate from status changes: this figure feeds a calculation
+ * that is announced and then locked, so changing it has to be its own audited
+ * action rather than a field on a general update.
+ */
+export async function setPodMonthlyFixedCosts(
+  db: Queryable,
+  podId: UUID,
+  monthlyFixedCosts: number,
+): Promise<Pod | null> {
+  const row = await queryOne(
+    db,
+    'UPDATE pod SET monthly_fixed_costs = $2 WHERE id = $1 RETURNING *',
+    [podId, monthlyFixedCosts],
+  );
+  return row ? toPod(row) : null;
 }
 
 export async function setPodStatus(db: Queryable, podId: UUID, status: PodStatus): Promise<Pod | null> {

@@ -97,7 +97,7 @@ export default async function CaseDetailPage({
           <li key={event.id} className="border-b border-line-100 px-4 py-3 last:border-b-0">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <span className="text-xs text-slate-500">{CASE_ROLE_LABELS[event.authorRole]}</span>
-              <span className="text-xs text-slate-400">{formatDateTime(event.createdAt)}</span>
+              <span className="text-xs text-slate-500">{formatDateTime(event.createdAt)}</span>
             </div>
             <p className="mt-1 max-w-prose text-sm text-ink-700">{event.body}</p>
           </li>

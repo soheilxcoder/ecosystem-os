@@ -15,7 +15,7 @@ import type { UUID } from '../../core/types';
 import { getPod } from '../../db/repositories/pods';
 import { getAgreement } from '../../db/repositories/agreements';
 import { guard, resolvePodResource } from '../middleware/auth';
-import { badRequest, notFound } from '../errors';
+import { badRequest, notFound, tooManyRequests } from '../errors';
 import {
   confirmArchive,
   getAgreementDetail,
@@ -156,6 +156,11 @@ export function registerAgreementRoutes(
 
   app.post('/api/agreements', async (request, reply) => {
     const principal = await request.auth.requirePrincipal();
+    // Flood guard on the public write surface (13 §6): checked before any
+    // other work so a spammer gets 429s, not database round-trips.
+    if (!app.context.rateLimiter.check('proposal.create', principal.id)) {
+      throw tooManyRequests('Proposal creation rate limit exceeded — try again in an hour');
+    }
     const parsed = ProposeBody.safeParse(request.body);
     if (!parsed.success) throw badRequest('Invalid proposal payload');
     const { podAId, podBId, terms } = parsed.data;

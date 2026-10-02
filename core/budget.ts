@@ -91,19 +91,58 @@ export function assertComponents(components: ScoreComponents): { ok: true } | { 
  * (`(0.40 × 78) + (0.35 × 82) + (0.25 × 65) = 76.15`).
  */
 export function unitScore(components: ScoreComponents): number {
+  return unitScoreWith(components, BUDGET_FORMULA_WEIGHTS);
+}
+
+/**
+ * The Unit Score under an explicit weighting.
+ *
+ * This exists because the weights are a *rule*, and rules can change: the
+ * Architecture Hub may version `budget.formula_weights` for a future cycle
+ * (08-MODULE-PEER-REVIEW-GOVERNANCE.md). A calculation that read the constant
+ * directly would keep using 40/35/25 forever while the rule panel advertised
+ * something else — the exact drift `core/governance.ts` imports the weights to
+ * prevent. Every budget cycle therefore snapshots its weights and passes them
+ * here, so what the panel says and what the arithmetic does cannot diverge.
+ *
+ * The weights are validated to sum to 100 before use; a cycle whose snapshot
+ * does not is a configuration error, not something to silently renormalise.
+ */
+export function unitScoreWith(
+  components: ScoreComponents,
+  /** Whole percentages (40/35/25), not fractions — the form stored on
+   *  `budget_cycle.formula_weights` and exposed by the rule registry. */
+  weights: Record<BudgetComponentKey, number>,
+): number {
+  const total =
+    (weights.financial ?? 0) + (weights.peer_review ?? 0) + (weights.strategic ?? 0);
+  if (Math.abs(total - 100) > 1e-9) {
+    throw new Error(`budget formula weights must sum to 100, got ${total}`);
+  }
   const raw =
-    BUDGET_WEIGHTS.financial * components.financial +
-    BUDGET_WEIGHTS.peer_review * components.peer_review +
-    BUDGET_WEIGHTS.strategic * components.strategic;
+    (weights.financial / 100) * components.financial +
+    (weights.peer_review / 100) * components.peer_review +
+    (weights.strategic / 100) * components.strategic;
   return Math.round(raw * 100) / 100;
 }
 
 /** The visible arithmetic line, e.g. `(0.40 × 78) + (0.35 × 82) + (0.25 × 65) = 76.15`. */
 export function describeUnitScore(components: ScoreComponents): string {
+  return describeUnitScoreWith(components, BUDGET_FORMULA_WEIGHTS);
+}
+
+/** The arithmetic line under an explicit weighting — what the strip renders. */
+export function describeUnitScoreWith(
+  components: ScoreComponents,
+  /** Whole percentages, as for `unitScoreWith`. */
+  weights: Record<BudgetComponentKey, number>,
+): string {
+  const fraction = (key: BudgetComponentKey): string =>
+    ((weights[key] ?? 0) / 100).toFixed(2);
   const parts = (['financial', 'peer_review', 'strategic'] as BudgetComponentKey[]).map(
-    (key) => `(${BUDGET_WEIGHTS[key].toFixed(2)} × ${round2(components[key])})`,
+    (key) => `(${fraction(key)} × ${round2(components[key])})`,
   );
-  return `${parts.join(' + ')} = ${round2(unitScore(components))}`;
+  return `${parts.join(' + ')} = ${round2(unitScoreWith(components, weights))}`;
 }
 
 function round2(value: number): number {

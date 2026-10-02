@@ -27,7 +27,7 @@ import {
   type PodServiceContext,
 } from '../services/pods';
 import { guard, resolvePodResource } from '../middleware/auth';
-import { badRequest, notFound } from '../errors';
+import { badRequest, notFound, tooManyRequests } from '../errors';
 
 const CheckinBody = z.object({
   body: z.string().min(1).max(500),
@@ -270,6 +270,10 @@ export function registerPodRoutes(
 
   app.post<{ Params: { podId: string } }>('/api/pods/:podId/pod-lead-vote', async (request, reply) => {
     const principal = await request.auth.requirePrincipal();
+    // Flood guard on the voting surface (13 §6).
+    if (!app.context.rateLimiter.check('pod.vote', principal.id)) {
+      throw tooManyRequests('Voting rate limit exceeded — try again in an hour');
+    }
     const resource = await resolvePodResource(deps.db, request.params.podId);
     const allowed = await guard(request, reply, 'pod.vote_pod_lead', resource);
     if (!allowed) return reply;

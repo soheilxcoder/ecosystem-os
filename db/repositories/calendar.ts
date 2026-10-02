@@ -223,6 +223,22 @@ export async function createCycleConfig(
 // --- cycles ----------------------------------------------------------------
 
 /**
+ * One cycle by primary key.
+ *
+ * Needed by modules that store a cycle *reference* rather than restating dates —
+ * a coach assignment's `start_cycle_id`, a budget cycle's `cycle_id`. Turning
+ * that reference back into a cycle number is how they answer "how many cycles
+ * has this been running?" without duplicating the calendar's own arithmetic.
+ */
+export async function getCycleById(
+  db: Queryable,
+  cycleId: UUID,
+): Promise<SprintCycleRow | null> {
+  const row = await queryOne(db, 'SELECT * FROM sprint_cycle WHERE id = $1', [cycleId]);
+  return row ? toSprintCycle(row) : null;
+}
+
+/**
  * The active cycle for a scope.
  *
  * A holding may run its own calendar (staggered rollouts like the Pars pilot);
@@ -389,6 +405,28 @@ export async function listReminders(db: Queryable, cycleId: UUID): Promise<Miles
     [cycleId],
   );
   return rows.map(toReminder);
+}
+
+/** All reminders across every active cycle, due on or before `onOrBefore`. */
+export async function listDueReminders(
+  db: Queryable,
+  onOrBefore: ISODate,
+): Promise<Array<MilestoneReminderRow & { orgId: UUID }>> {
+  const rows = await queryMany<Record<string, unknown> & { org_id: UUID }>(
+    db,
+    `SELECT r.*, c.org_id
+       FROM cycle_milestone_reminder r
+       JOIN sprint_cycle c ON c.id = r.cycle_id
+      WHERE r.notified = false AND r.target_date <= $1::date AND c.status = 'active'
+      ORDER BY r.target_date`,
+    [onOrBefore],
+  );
+  return rows.map((row) => ({ ...toReminder(row), orgId: row.org_id }));
+}
+
+/** Flips the notified flag once the milestone has been announced. */
+export async function markReminderNotified(db: Queryable, reminderId: UUID): Promise<void> {
+  await db.query('UPDATE cycle_milestone_reminder SET notified = true WHERE id = $1', [reminderId]);
 }
 
 // --- governance settings ---------------------------------------------------

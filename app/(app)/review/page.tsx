@@ -150,7 +150,7 @@ export default async function ReviewHomePage() {
                           Accountability Path
                         </Link>
                       ) : (
-                        <span className="text-slate-400">—</span>
+                        <span className="text-slate-500">—</span>
                       )}
                     </td>
                   </tr>

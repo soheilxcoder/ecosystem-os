@@ -176,7 +176,12 @@ export const PERMISSION_MATRIX: Record<Action, PermissionRule> = {
   'calendar.configure': { roles: ['hub_architecture'] },
 
   // --- Coaching (07) ---
-  'coach.view_pods': { roles: ['coach'] },
+  // `view_pods` is read-your-own-data: the console, refresh and capacity
+  // endpoints identify the coach by their own user id and the service layer
+  // only ever returns that coach's own assignments. Marking it org-wide means a
+  // pod-scoped coach can open their console without the scope check demanding a
+  // pod id that the endpoint legitimately does not have.
+  'coach.view_pods': { roles: ['coach'], orgWide: true },
   'coach.log_session': { roles: ['coach'] },
   'coach.view_private_notes': { roles: ['coach'] },
   'coach.flag_accountability': { roles: ['coach'] },
@@ -206,8 +211,43 @@ export const PERMISSION_MATRIX: Record<Action, PermissionRule> = {
   'pilot.approve_expansion': { roles: ['holding_executive'] },
 
   // --- Archive & notifications (10, 11) ---
-  'archive.search': { roles: ['pod_member', 'pod_lead'], orgWide: true },
-  'notification.read_own': { roles: ['pod_member', 'pod_lead'], orgWide: true },
+  // Both are org-wide by construction: every seat receives notifications (a
+  // coach gets the red-health alert, a hub gets the budget announcement) and the
+  // archive is the org's shared memory. The privacy guarantee is about what the
+  // index may contain — never about who in the org may search it — so every role
+  // holds these two actions and the guard against leaks lives in the indexer.
+  'archive.search': {
+    roles: [
+      'pod_member',
+      'pod_lead',
+      'peer_validator',
+      'conflict_resolver',
+      'coach',
+      'hub_architecture',
+      'hub_deployment',
+      'hub_coaching',
+      'hub_strategic',
+      'investor',
+      'holding_executive',
+    ],
+    orgWide: true,
+  },
+  'notification.read_own': {
+    roles: [
+      'pod_member',
+      'pod_lead',
+      'peer_validator',
+      'conflict_resolver',
+      'coach',
+      'hub_architecture',
+      'hub_deployment',
+      'hub_coaching',
+      'hub_strategic',
+      'investor',
+      'holding_executive',
+    ],
+    orgWide: true,
+  },
 
   // --- Investor / holding ---
   'investor.view_report': { roles: ['investor', 'hub_strategic'] },

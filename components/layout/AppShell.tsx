@@ -18,9 +18,19 @@ export interface AppShellProps {
   children: ReactNode;
   /** Set when /api/me could not be reached, so stale data is never shown silently. */
   apiUnavailable?: boolean;
+  /** Unread notifications for the bell badge (Module 11). */
+  notificationCount?: number;
+  /** Outstanding urgent items — turns the bell alert-toned. */
+  urgentCount?: number;
 }
 
-export function AppShell({ me, children, apiUnavailable = false }: AppShellProps) {
+export function AppShell({
+  me,
+  children,
+  apiUnavailable = false,
+  notificationCount = 0,
+  urgentCount = 0,
+}: AppShellProps) {
   const userName = me?.user?.fullName ?? 'Signed in';
   const userEmail = me?.user?.email ?? '';
   const holdings = me?.holdings ?? [];
@@ -34,8 +44,8 @@ export function AppShell({ me, children, apiUnavailable = false }: AppShellProps
         holdings={holdings}
         activeHoldingId={holdings[0]?.id ?? null}
         isHubUser={me?.isHubUser ?? false}
-        notificationCount={0}
-        urgentCount={0}
+        notificationCount={notificationCount}
+        urgentCount={urgentCount}
         signOutAction={signOutAction}
       />
 
@@ -70,7 +80,7 @@ export function AppShell({ me, children, apiUnavailable = false }: AppShellProps
         <main className="flex-1 px-6 py-6 pb-24 md:pb-8">{children}</main>
       </div>
 
-      <BottomTabBar isHubUser={me?.isHubUser ?? false} notificationCount={0} />
+      <BottomTabBar isHubUser={me?.isHubUser ?? false} notificationCount={notificationCount} />
     </div>
   );
 }

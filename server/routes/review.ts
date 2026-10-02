@@ -16,7 +16,7 @@ import { getPod } from '../../db/repositories/pods';
 import { getPitchPodId } from '../../db/repositories/review';
 import { guard, resolvePodResource } from '../middleware/auth';
 import type { ResourceRef } from '../../core/permissions';
-import { badRequest, forbidden } from '../errors';
+import { badRequest, forbidden, tooManyRequests } from '../errors';
 import {
   assignReviewersForCycle,
   escalateToRuleReview,
@@ -226,6 +226,10 @@ export function registerReviewRoutes(
     '/api/review/:pitchId/score',
     async (request, reply) => {
       const principal = await request.auth.requirePrincipal();
+      // Flood guard on the review submission surface (13 §6).
+      if (!app.context.rateLimiter.check('review.submit', principal.id)) {
+        throw tooManyRequests('Review submission rate limit exceeded — try again in an hour');
+      }
       const seat = await validatorResource(principal.id, today());
       const allowed = await guard(request, reply, 'review.submit_score', {
         orgId: principal.orgId,

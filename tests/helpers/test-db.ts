@@ -21,6 +21,10 @@ export async function truncateAll(db: Database): Promise<void> {
   await db.exec(`
     TRUNCATE TABLE
       domain_event, audit_log,
+      pod_health_signal, coaching_session, coaching_session_request,
+      coach_assignment, coach_profile,
+      pod_budget_result, pod_score_component, budget_cycle,
+      financial_sync_record, pod_goal_alignment, strategic_goal,
       cloud_agreement_archive_confirmation, cloud_agreement_event, cloud_agreement,
       weekly_checkin, pitch, pod_lead_vote, pod_lead_term, pod_cycle_plan,
       accountability_panel_member, accountability_case, entry_trial,

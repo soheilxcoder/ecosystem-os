@@ -29,3 +29,9 @@ export const badRequest = (message: string, code = 'invalid_request'): HttpError
  */
 export const conflict = (message: string, code = 'conflict'): HttpError =>
   httpError(409, message, code);
+
+/** 429 — per-user write rate limit (13-TECHNICAL-ARCHITECTURE §6). */
+export const tooManyRequests = (
+  message = 'Rate limit exceeded — try again later',
+  code = 'rate_limited',
+): HttpError => httpError(429, message, code);

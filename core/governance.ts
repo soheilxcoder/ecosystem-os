@@ -75,6 +75,7 @@ export const RULE_KEYS = [
   'review.reviewers_per_pitch',
   'review.comment_min_length',
   'budget.formula_weights',
+  'investor_min_aggregation',
 ] as const;
 
 export type RuleKey = (typeof RULE_KEYS)[number];
@@ -149,6 +150,14 @@ export const RULE_REGISTRY: Record<RuleKey, RuleDefinition> = {
     // The constitutional 40/35/25 split — imported from the budget module so
     // the rule panel, the formula and the budget screen cannot drift apart.
     defaultValue: { ...BUDGET_FORMULA_WEIGHTS },
+  },
+  'investor_min_aggregation': {
+    key: 'investor_min_aggregation',
+    label: 'Minimum pods an investor report may aggregate',
+    source: 'recorded',
+    // Module 09: reports below this size are refused, so pod-level detail can
+    // never leak through the investor portal. Raising it tightens the portal.
+    defaultValue: 2,
   },
 };
 

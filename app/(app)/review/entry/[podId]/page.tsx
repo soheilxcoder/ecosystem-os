@@ -124,7 +124,7 @@ export default async function EntryTrialPage({ params }: { params: Promise<{ pod
                     label={RECOMMENDATION_COPY[view.podRep.recommendation]}
                   />
                 ) : (
-                  <span className="text-slate-400">Not recorded</span>
+                  <span className="text-slate-500">Not recorded</span>
                 )}
               </dd>
             </div>
@@ -137,7 +137,7 @@ export default async function EntryTrialPage({ params }: { params: Promise<{ pod
                     label={RECOMMENDATION_COPY[view.hubRep.recommendation]}
                   />
                 ) : (
-                  <span className="text-slate-400">Not recorded</span>
+                  <span className="text-slate-500">Not recorded</span>
                 )}
               </dd>
             </div>

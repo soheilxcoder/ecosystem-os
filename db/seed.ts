@@ -17,7 +17,21 @@ import { migrate } from './migrate';
 import { createHolding, createOrg, createUser } from './repositories/users';
 import { addPodMember, createCheckin, createPod, createPodLeadTerm } from './repositories/pods';
 import { assignRole } from './repositories/roles';
-import { createCycleConfig, upsertGovernanceConfig } from './repositories/calendar';
+import {
+  completeCycle,
+  createCycle,
+  createCycleConfig,
+  upsertGovernanceConfig,
+} from './repositories/calendar';
+import {
+  createAssignment,
+  createSession,
+  createSessionRequest,
+  endAssignment,
+  upsertCoachProfile,
+  upsertHealthSignal,
+} from './repositories/coaching';
+import { podHealthSignal, type HealthSignal } from '../core/health';
 import { insertOne, queryOne } from './client';
 import {
   addConflictCaseEvent,
@@ -40,8 +54,25 @@ import {
 import { selectReviewers } from '../core/peer-review';
 import { entryDecisionDueDate } from '../core/entry-trial';
 import { createAgreement, insertAgreementEvent } from './repositories/agreements';
+import {
+  createStrategicGoal,
+  recordFinancialSync,
+  upsertGoalAlignment,
+} from './repositories/budget';
+import { setPodMonthlyFixedCosts } from './repositories/pods';
+import {
+  createExternalContact,
+  createInvestorReport,
+  createPilotProgram,
+  publishInvestorReport,
+  updatePilotPhase,
+  updatePilotSuccessCriteria,
+} from './repositories/hub';
 import type { CloudTerms } from '../core/types';
 import { startCycle } from '../server/services/calendar';
+import { computeBudget } from '../server/services/budget';
+import { createEventBus } from '../core/events';
+import { persistDomainEvent } from './repositories/audit';
 import { DEFAULT_PHASE_BOUNDARIES } from '../core/calendar';
 import { loadEnv } from '../server/config';
 import { addDays, todayISO } from '../core/time';
@@ -109,6 +140,41 @@ async function main(): Promise<void> {
       allowLeadReElection: false,
     });
 
+    /*
+     * Two completed cycles before the live one, so the active cycle is number 3.
+     *
+     * Coaching needs history to be demoable: a reassignment countdown only reads
+     * "due"/"overdue" once an assignment has survived more than one cycle, and a
+     * red-streak banner needs consecutive red signals. Both count against real
+     * sprint cycles, so the earlier cycles must actually exist. They are created
+     * completed and otherwise bare — the budget and peer-review seed below still
+     * targets the live cycle only.
+     */
+    const CYCLE_DAYS = 90;
+    const cycle2Start = addDays(cycleStart, -CYCLE_DAYS);
+    const cycle1Start = addDays(cycleStart, -CYCLE_DAYS * 2);
+
+    const priorCycle1 = await createCycle(db, {
+      orgId: org.id,
+      holdingId: null,
+      cycleNumber: 1,
+      startDate: cycle1Start,
+      endDate: addDays(cycle1Start, CYCLE_DAYS - 1),
+      phaseBoundaries: { ...DEFAULT_PHASE_BOUNDARIES },
+    });
+    await completeCycle(db, priorCycle1.id);
+
+    const priorCycle2 = await createCycle(db, {
+      orgId: org.id,
+      holdingId: null,
+      cycleNumber: 2,
+      startDate: cycle2Start,
+      endDate: addDays(cycle2Start, CYCLE_DAYS - 1),
+      phaseBoundaries: { ...DEFAULT_PHASE_BOUNDARIES },
+    });
+    await completeCycle(db, priorCycle2.id);
+
+    // The live cycle is therefore number 3.
     const cycle = await startCycle(db, {
       orgId: org.id,
       holdingId: null,
@@ -162,6 +228,7 @@ async function main(): Promise<void> {
     const rana = await user('Rana Research', 'rana@example.org');
     const sam = await user('Sam Solver', 'sam@example.org');
     const cora = await user('Cora Coach', 'cora@example.org');
+    const dara = await user('Dara Coach', 'dara@example.org');
     const ari = await user('Ari Architect', 'ari@example.org');
     const dan = await user('Dan Deploy', 'dan@example.org');
     const cass = await user('Cass Coaching', 'cass@example.org');
@@ -213,6 +280,9 @@ async function main(): Promise<void> {
     await role(cora, 'coach', 'pod', atlas.id, addDays(TODAY, -30), coachEnd);
     await role(cora, 'coach', 'pod', basalt.id, addDays(TODAY, -30), coachEnd);
     await role(cora, 'coach', 'pod', cinder.id, addDays(TODAY, -30), coachEnd);
+    // A second coach: holds Dune now and covered Cinder before Cora took over.
+    await role(dara, 'coach', 'pod', dune.id, addDays(TODAY, -200), coachEnd);
+    await role(dara, 'coach', 'pod', cinder.id, addDays(TODAY, -200), coachEnd);
 
     // Company X hub roles (org-scoped, open-ended).
     await role(ari, 'hub_architecture', 'org', null, addDays(TODAY, -400));
@@ -602,8 +672,374 @@ async function main(): Promise<void> {
       }
     }
 
+    // -----------------------------------------------------------------------
+    // Internal Budget Market (Module 05)
+    // -----------------------------------------------------------------------
+    /*
+     * The demo is deliberately seeded into a *provisional* state with two real
+     * gaps in it, rather than a clean calculated cycle:
+     *
+     *   - Pod Dune's accounting sync failed, so its financial component is a
+     *     midpoint estimate and the breakdown screen shows the connector banner.
+     *   - Pod Ember has peer reviews assigned but not all submitted, so the lock
+     *     checklist has something true to refuse on.
+     *
+     * A demo where every number is final teaches nothing about the part of this
+     * module that matters most — telling an estimate apart from an announced
+     * figure. Both gaps are visible on the current-cycle screen and both name
+     * whose action closes them.
+     */
+    const fixedCosts: Array<[UUID, number]> = [
+      [atlas.id, 42_000_000],
+      [basalt.id, 38_000_000],
+      [cinder.id, 21_000_000],
+      [dune.id, 26_000_000],
+      [ember.id, 31_000_000],
+    ];
+    for (const [podId, amount] of fixedCosts) {
+      await setPodMonthlyFixedCosts(db, podId, amount);
+    }
+
+    // Strategic goals, scored by the Strategic Interactions Hub against a rubric.
+    const goalExpansion = await createStrategicGoal(db, {
+      orgId: org.id,
+      label: 'Ecosystem expansion',
+      description: 'New value companies founded, and pods that can operate without Company X in the loop',
+    });
+    const goalQuality = await createStrategicGoal(db, {
+      orgId: org.id,
+      label: 'Delivery quality',
+      description: 'Predictability of what a pod commits to at the start of a cycle',
+    });
+    const goalCost = await createStrategicGoal(db, {
+      orgId: org.id,
+      label: 'Cost of coordination',
+      description: 'How much of the ecosystem\u2019s effort goes into coordinating rather than producing',
+    });
+
+    const alignments: Array<[UUID, UUID, number, number, string]> = [
+      [atlas.id, goalExpansion!.id, 72, 1, 'Two new enterprise accounts opened without hub involvement.'],
+      [atlas.id, goalQuality!.id, 68, 1, 'Committed to four deliverables, shipped three on the day promised.'],
+      [basalt.id, goalQuality!.id, 81, 1.5, 'Every trial batch inside specification for the third cycle running.'],
+      [basalt.id, goalCost!.id, 64, 1, 'Handoffs to Cinder still need a standing meeting; that is the cost here.'],
+      [cinder.id, goalExpansion!.id, 58, 1, 'Prototype is promising but not yet a line anybody would fund.'],
+      [dune.id, goalCost!.id, 74, 1, 'Reduced the QA queue handoff from three steps to one.'],
+      [ember.id, goalExpansion!.id, 79, 1, 'Two channels showing real traction, both started by the pod itself.'],
+    ];
+    for (const [podId, goalId, score, weight, rationale] of alignments) {
+      await upsertGoalAlignment(db, {
+        orgId: org.id,
+        cycleId: cycle.id,
+        podId,
+        goalId,
+        score,
+        weight,
+        scoredBy: sana,
+        rationale,
+      });
+    }
+
+    // Financial figures for the cycle period. Dune's sync fails on purpose.
+    const periodStart = cycle.startDate;
+    const periodEnd = cycle.endDate;
+    const financials: Array<[UUID, number, number, number]> = [
+      [atlas.id, 1_240_000_000, 980_000_000, 260_000_000],
+      [basalt.id, 980_000_000, 742_000_000, 238_000_000],
+      [cinder.id, 210_000_000, 268_000_000, -58_000_000],
+      [ember.id, 760_000_000, 604_000_000, 156_000_000],
+    ];
+    for (const [podId, revenue, costs, profit] of financials) {
+      await recordFinancialSync(db, {
+        podId,
+        cycleId: cycle.id,
+        sourceSystem: 'Pars Accounting',
+        periodStart,
+        periodEnd,
+        status: 'ok',
+        revenue,
+        costs,
+        profit,
+        currency: 'IRR',
+      });
+    }
+    await recordFinancialSync(db, {
+      podId: dune.id,
+      cycleId: cycle.id,
+      sourceSystem: 'Pars Accounting',
+      periodStart,
+      periodEnd,
+      status: 'failed',
+      error: 'The connector timed out after three attempts; the last successful sync was cycle 6.',
+    });
+
+    // Submit most of the assigned peer reviews. Ember keeps one open so the lock
+    // checklist has a genuine blocker to report.
+    const reviewScores: Array<[UUID, number[]]> = [
+      [atlas.id, [82, 78]],
+      [basalt.id, [88, 85, 79]],
+      [cinder.id, [61, 58]],
+      [dune.id, [76, 80]],
+      [ember.id, [84]],
+    ];
+    for (const [podId, scores] of reviewScores) {
+      const pitch = await queryOne<{ id: UUID }>(
+        db,
+        'SELECT id FROM pitch WHERE pod_id = $1 AND cycle_id = $2',
+        [podId, cycle.id],
+      );
+      if (!pitch) continue;
+      const open = await db.query<{ id: UUID }>(
+        `SELECT id FROM peer_review
+          WHERE pitch_id = $1 AND submitted_at IS NULL
+          ORDER BY assigned_at
+          LIMIT $2`,
+        [pitch.id, scores.length],
+      );
+      for (const [index, row] of open.rows.entries()) {
+        const score = scores[index];
+        if (score === undefined) break;
+        await db.query(
+          `UPDATE peer_review
+              SET score = $2,
+                  comments = $3,
+                  submitted_at = now()
+            WHERE id = $1`,
+          [
+            row.id,
+            score,
+            'The pod evidenced its claims against the dashboard rather than asserting them, and ' +
+              'named the one thing that slipped instead of leaving a reader to find it. The next ' +
+              'plan is sized to the capacity this pod actually has, which is the part most pitches ' +
+              'get wrong.',
+          ],
+        );
+      }
+    }
+
+    // Run the calculation through the real service — the same code path the
+    // Architecture Hub uses — so the seeded numbers cannot drift from what the
+    // product would compute.
+    const seedBus = createEventBus({
+      persist: async (event) => {
+        await persistDomainEvent(db, event);
+      },
+    });
+    const budget = await computeBudget(
+      { db, bus: seedBus, today: () => TODAY },
+      {
+        orgId: org.id,
+        cycleId: cycle.id,
+        cycleNumber: cycle.cycleNumber,
+        totalPool: 1_840_000_000,
+        actorUserId: ari,
+      },
+    );
+
     // Noor has no role assignments: the platform must render a truthful
     // "no active role" empty state rather than letting her act anywhere.
+
+    // --- Coaching (Module 07) -----------------------------------------------
+    // Assignments spread across the three cycles so the rotation countdown shows
+    // every state, plus one red-streak pod and one unassigned pod so the roster
+    // has both a banner and a gap to show.
+    await upsertCoachProfile(db, {
+      orgId: org.id,
+      coachUserId: cora,
+      schedulingUrl: 'https://cal.example.org/cora',
+      capacity: 'comfortable',
+    });
+    await upsertCoachProfile(db, {
+      orgId: org.id,
+      coachUserId: dara,
+      schedulingUrl: 'https://cal.example.org/dara',
+      capacity: 'stretched',
+    });
+
+    // Cora → Atlas from cycle 1 → three cycles in → review overdue.
+    await createAssignment(db, {
+      orgId: org.id,
+      coachUserId: cora,
+      podId: atlas.id,
+      startCycleId: priorCycle1.id,
+      createdBy: cass,
+    });
+    // Cora → Basalt from cycle 2 → two cycles in → review due.
+    await createAssignment(db, {
+      orgId: org.id,
+      coachUserId: cora,
+      podId: basalt.id,
+      startCycleId: priorCycle2.id,
+      createdBy: cass,
+    });
+    // Cinder rotated this cycle: Dara covered it for two cycles, then handed it
+    // to Cora — the ended assignment is the history the pod's coach card shows.
+    const daraCinder = await createAssignment(db, {
+      orgId: org.id,
+      coachUserId: dara,
+      podId: cinder.id,
+      startCycleId: priorCycle1.id,
+      createdBy: cass,
+    });
+    await endAssignment(db, daraCinder.id, {
+      endCycleId: cycle.id,
+      reasonForChange: 'Planned rotation at the two-cycle review',
+    });
+    await createAssignment(db, {
+      orgId: org.id,
+      coachUserId: cora,
+      podId: cinder.id,
+      startCycleId: cycle.id,
+      createdBy: cass,
+    });
+    // Dara → Dune from cycle 2 → review due. Ember is deliberately left
+    // unassigned: a roster gap the Coaching Hub must see.
+    await createAssignment(db, {
+      orgId: org.id,
+      coachUserId: dara,
+      podId: dune.id,
+      startCycleId: priorCycle2.id,
+      createdBy: cass,
+    });
+
+    // Health signals. Cinder has been red for all three of its cycles — a streak
+    // of 3 that crosses the default 2-cycle flag threshold, so the console has a
+    // banner to raise (as a suggestion, never an automatic case).
+    const red = (): HealthSignal =>
+      podHealthSignal({ atRiskCheckins: 4, checkins: 4, scoreTrend: -10, reviewSentiment: 5 });
+    const green = (): HealthSignal =>
+      podHealthSignal({ atRiskCheckins: 0, checkins: 5, scoreTrend: 3, reviewSentiment: 90 });
+    const amber = (): HealthSignal =>
+      podHealthSignal({ atRiskCheckins: 1, checkins: 4, scoreTrend: 0, reviewSentiment: 70 });
+
+    for (const cycleRef of [priorCycle1.id, priorCycle2.id, cycle.id]) {
+      await upsertHealthSignal(db, { orgId: org.id, podId: cinder.id, cycleId: cycleRef, signal: red() });
+    }
+    await upsertHealthSignal(db, { orgId: org.id, podId: atlas.id, cycleId: cycle.id, signal: green() });
+    await upsertHealthSignal(db, { orgId: org.id, podId: basalt.id, cycleId: cycle.id, signal: amber() });
+    await upsertHealthSignal(db, { orgId: org.id, podId: dune.id, cycleId: cycle.id, signal: green() });
+
+    // A few sessions across the two save modes, so both the coach console and
+    // the pod's "my coach" history have real rows to render.
+    await createSession(db, {
+      orgId: org.id,
+      coachUserId: cora,
+      podId: atlas.id,
+      occurredAt: addDays(TODAY, -12),
+      sessionType: 'check_in',
+      privateNotes:
+        'Walked through the stalled Basalt export. Lena is carrying the coordination ' +
+        'load alone; suggested splitting the hand-off with Mo before it becomes a dependency.',
+      podVisibleSummary:
+        'Reviewed the sprint plan and the blocked data export; agreed Mo will co-own the hand-off.',
+    });
+    await createSession(db, {
+      orgId: org.id,
+      coachUserId: cora,
+      podId: cinder.id,
+      occurredAt: addDays(TODAY, -6),
+      sessionType: 'conflict_support',
+      privateNotes:
+        'Sensitive 1:1 about the two conflicting priorities inside the pod. Kept private ' +
+        'by design — nothing here is ready to share, and the pod agreed a follow-up next week.',
+    });
+    await createSession(db, {
+      orgId: org.id,
+      coachUserId: dara,
+      podId: dune.id,
+      occurredAt: addDays(TODAY, -9),
+      sessionType: 'skill_development',
+      privateNotes:
+        'Coached Sam on running the ops retrospective. The failed accounting sync is ' +
+        'demoralising the pod; framed it as a fixable data gap, not a verdict.',
+      podVisibleSummary:
+        'Ran a retrospective together; the team agreed on one owner for the accounting fix.',
+    });
+
+    // An open request from Atlas so the coach console's inbox is not empty.
+    await createSessionRequest(db, {
+      orgId: org.id,
+      podId: atlas.id,
+      coachUserId: cora,
+      requestedBy: lena,
+      topic: 'Help prioritising the two enterprise proposals before the cycle review',
+      urgency: 'high',
+      preferredTimes: 'Weekday mornings',
+    });
+
+    console.log('[seed]   coaching: Cora covers Atlas/Basalt/Cinder, Dara covers Dune (Cinder rotated');
+    console.log('[seed]   this cycle); Cinder is red three cycles running and Ember has no coach.');
+
+    // -------------------------------------------------------------------------
+    // Strategic Hub Console (09): the Pars Pilot, the contact log, and one
+    // published aggregated investor report (never single-pod).
+    // -------------------------------------------------------------------------
+    const pilot = await createPilotProgram(db, {
+      orgId: org.id,
+      name: 'Pars Pilot',
+      holdingId: pars.id,
+      pilotPodId: cinder.id,
+    });
+    await updatePilotPhase(db, pilot.id, {
+      currentPhase: 'sprint',
+      phaseStatus: {
+        selection_diagnostic: { status: 'done', owner: 'Deployment Hub' },
+        pod_split_charter: { status: 'done', owner: 'Deployment Hub + Holding CEO' },
+        platform_setup: { status: 'done', owner: 'Architecture Hub' },
+        rules_training: { status: 'done', owner: 'Coaching Hub' },
+        sprint: { status: 'in_progress', owner: 'Pod Cinder + Coach Cora' },
+        evaluation: { status: 'not_started', owner: 'Deployment Hub + Holding Executive' },
+      },
+    });
+    await updatePilotSuccessCriteria(db, pilot.id, {
+      decisionTimeBaseline: 5,
+      decisionTimeCurrent: 2.4,
+      satisfactionScore: null,
+      profitBudgetRatioBaseline: 0.9,
+      profitBudgetRatioCurrent: null,
+    });
+
+    await createExternalContact(db, {
+      orgId: org.id,
+      name: 'Nordwind Capital',
+      relationshipType: 'investor',
+      lastInteractionAt: addDays(TODAY, -12),
+      notes: 'Follow-up call after the Q3 aggregated update; interested in the Pars Pilot outcome.',
+    });
+    await createExternalContact(db, {
+      orgId: org.id,
+      name: 'Makers Guild',
+      relationshipType: 'partner',
+      lastInteractionAt: addDays(TODAY, -30),
+      notes: 'Prototype exchange agreement in draft with Pod Basalt.',
+    });
+    await createExternalContact(db, {
+      orgId: org.id,
+      name: 'Trade Weekly',
+      relationshipType: 'media',
+      lastInteractionAt: null,
+      notes: 'Requested a comment on the pilot programme; routed to Strategic Interactions.',
+    });
+
+    const investorWindowFrom = addDays(TODAY, -90);
+    const report = await createInvestorReport(db, {
+      orgId: org.id,
+      generatedBy: sana,
+      dateFrom: investorWindowFrom,
+      dateTo: TODAY,
+      scope: { holdingIds: [], podIds: [] },
+      metrics: {
+        totalBudgetDistributed: 1_260_000_000,
+        activePodCount: 4,
+        podsPastTrial: 4,
+        podsDiscontinued: 0,
+        aggregateFinancialTrend: 18_400_000,
+        podCountInScope: 5,
+      },
+    });
+    await publishInvestorReport(db, report.id);
+
+    console.log('[seed]   hub: "Pars Pilot" mid-sprint (Pod Cinder), three external contacts,');
+    console.log('[seed]   one published investor report covering the whole org (aggregation enforced).');
 
     console.log(`[seed] organisation "${org.name}" ready (driver: ${db.driver})`);
     console.log(`[seed]   holdings: ${pars.name}, ${dena.name}`);
@@ -621,6 +1057,14 @@ async function main(): Promise<void> {
     );
     console.log('[seed]   Pod Dune and Pod Ember have no agreement in force — the network graph');
     console.log('[seed]   draws them connected only through the shared platform hub.');
+    console.log(
+      `[seed]   budget cycle ${budget.budgetCycle.cycleNumber}: pool ${budget.totals.totalPool.toLocaleString('en-US')}, ` +
+        `${budget.pods.length} pods, ${budget.blockers.length} unresolved input(s) — provisional by design`,
+    );
+    console.log(
+      '[seed]   Pod Dune has a failed accounting sync and Pod Ember an open peer review, so the',
+    );
+    console.log('[seed]   lock checklist and the connector banner both have something real to show.');
     console.log('[seed]   governance: Cinder on the 90-Day Entry Rule (day 35), Ember at stage 4');
     console.log('[seed]   with its panel constituted; one conflict case open for cass@example.org.');
     console.log('[seed] sign in with any @example.org address, e.g. lena@example.org (Pod Lead, Atlas)');

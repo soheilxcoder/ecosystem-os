@@ -224,7 +224,8 @@ function SidebarLink({
       <span className="hidden min-w-0 flex-1 truncate xl:block">{label}</span>
       {badge && badge > 0 ? (
         <span
-          className={`tabular ml-auto hidden rounded px-1.5 py-0.5 text-2xs xl:block ${
+          key={badge} /* remount on change so the 200ms pop replays (§7.8) */
+          className={`tabular ml-auto hidden animate-badge-pop rounded px-1.5 py-0.5 text-2xs xl:block ${
             urgent ? 'bg-status-alert text-white' : 'bg-paper-100 text-slate-500'
           }`}
         >

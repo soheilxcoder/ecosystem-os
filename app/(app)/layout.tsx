@@ -19,10 +19,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   const token = await getSessionToken();
-  const me = await apiRequestOrNull<ApiMe>('/api/me', { token });
+  const [me, counts] = await Promise.all([
+    apiRequestOrNull<ApiMe>('/api/me', { token }),
+    apiRequestOrNull<{ unread: number; urgent: number }>('/api/notifications/counts', { token }),
+  ]);
 
   return (
-    <AppShell me={me} apiUnavailable={me === null}>
+    <AppShell
+      me={me}
+      apiUnavailable={me === null}
+      notificationCount={counts?.unread ?? 0}
+      urgentCount={counts?.urgent ?? 0}
+    >
       {children}
     </AppShell>
   );

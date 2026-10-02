@@ -21,7 +21,7 @@ export function BottomTabBar({ isHubUser, notificationCount }: BottomTabBarProps
   const pathname = usePathname();
   const items = [
     ...MOBILE_NAV_ITEMS.filter((item) => !item.hubOnly || isHubUser),
-    { href: '/notifications', label: 'Notifications', icon: IconBell, available: false, phase: 6 },
+    { href: '/notifications', label: 'Notifications', icon: IconBell, available: true, phase: 6 },
   ].slice(0, 5);
 
   return (
@@ -42,7 +42,8 @@ export function BottomTabBar({ isHubUser, notificationCount }: BottomTabBarProps
               <Icon size={20} />
               {item.href === '/notifications' && notificationCount > 0 ? (
                 <span
-                  className="absolute -right-1.5 -top-1 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-status-alert px-1 text-[9px] text-white"
+                  key={notificationCount} /* remount on change: the 200ms pop replays (§7.8) */
+                  className="absolute -right-1.5 -top-1 grid h-3.5 min-w-3.5 animate-badge-pop place-items-center rounded-full bg-status-alert px-1 text-[9px] text-white"
                   aria-label={`${notificationCount} unread`}
                 >
                   {notificationCount}

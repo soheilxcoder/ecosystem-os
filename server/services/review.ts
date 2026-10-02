@@ -205,7 +205,24 @@ export async function assignReviewersForCycle(
     });
 
     for (const reviewerUserId of reviewerUserIds) {
-      await assignReview(context.db, { cycleId, pitchId: pitch.pitchId, reviewerUserId });
+      const review = await assignReview(context.db, {
+        cycleId,
+        pitchId: pitch.pitchId,
+        reviewerUserId,
+      });
+      if (review) {
+        // Canonical trigger (11): "Peer review assignment created" → the
+        // assigned reviewer. aggregateId is the review row so the dispatcher
+        // can deep-link and check completion against it.
+        await context.bus.publish({
+          type: 'review.assigned',
+          aggregateType: 'peer_review',
+          aggregateId: review.id,
+          orgId,
+          actorUserId: null,
+          payload: { pitchId: pitch.pitchId, reviewerUserId, podName: pitch.podName },
+        });
+      }
     }
 
     results.push({

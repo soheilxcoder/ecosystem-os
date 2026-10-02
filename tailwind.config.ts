@@ -121,10 +121,20 @@ const config: Config = {
           '0%, 100%': { opacity: '0.55' },
           '50%': { opacity: '0.85' },
         },
+        // The one app-wide motion moment (master plan §7.8): the notification
+        // badge pops when its count changes. 200ms, scale only — meaning never
+        // depends on it (the number is present before and after), and the global
+        // prefers-reduced-motion rule in globals.css collapses it to instant.
+        'badge-pop': {
+          '0%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.25)' },
+          '100%': { transform: 'scale(1)' },
+        },
       },
       animation: {
         'fade-rise': 'fade-rise 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both',
         'skeleton-pulse': 'skeleton-pulse 1.6s ease-in-out infinite',
+        'badge-pop': 'badge-pop 200ms ease-out',
       },
     },
   },
