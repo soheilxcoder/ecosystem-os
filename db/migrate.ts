@@ -17,7 +17,18 @@ import { fileURLToPath } from 'node:url';
 import { createDatabase, type Database, type Queryable } from './client';
 import { loadEnv } from '../server/config';
 
-const MIGRATIONS_DIR = join(dirname(fileURLToPath(import.meta.url)), 'migrations');
+/**
+ * Resolved lazily: `fileURLToPath(import.meta.url)` is only valid in Node.
+ * The browser edition bundles the SQL itself (live/migrate.ts) and never
+ * calls this — but importing this module must not crash a browser bundle.
+ */
+let cachedMigrationsDir: string | null = null;
+function migrationsDir(): string {
+  if (!cachedMigrationsDir) {
+    cachedMigrationsDir = join(dirname(fileURLToPath(import.meta.url)), 'migrations');
+  }
+  return cachedMigrationsDir;
+}
 
 export interface Migration {
   version: string;
@@ -26,7 +37,7 @@ export interface Migration {
   checksum: string;
 }
 
-export async function readMigrations(dir: string = MIGRATIONS_DIR): Promise<Migration[]> {
+export async function readMigrations(dir: string = migrationsDir()): Promise<Migration[]> {
   const files = (await fsp.readdir(dir)).filter((file) => file.endsWith('.sql')).sort();
   return Promise.all(
     files.map(async (file) => {
@@ -64,7 +75,7 @@ async function appliedMigrations(db: Queryable): Promise<Map<string, string>> {
 }
 
 /** Apply all pending migrations. Returns the versions applied in this run. */
-export async function migrate(db: Database | Queryable, dir: string = MIGRATIONS_DIR): Promise<string[]> {
+export async function migrate(db: Database | Queryable, dir: string = migrationsDir()): Promise<string[]> {
   await ensureMigrationsTable(db);
   const applied = await appliedMigrations(db);
   const migrations = await readMigrations(dir);
@@ -107,7 +118,7 @@ export async function migrate(db: Database | Queryable, dir: string = MIGRATIONS
 }
 
 /** True when every migration on disk has been applied and is unmodified. */
-export async function isUpToDate(db: Queryable, dir: string = MIGRATIONS_DIR): Promise<boolean> {
+export async function isUpToDate(db: Queryable, dir: string = migrationsDir()): Promise<boolean> {
   await ensureMigrationsTable(db);
   const applied = await appliedMigrations(db);
   const migrations = await readMigrations(dir);
