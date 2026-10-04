@@ -18,18 +18,23 @@
     <div id="root"></div>
     <script>
       // Catch fatal boot failures before/after the module graph loads.
-      window.__liveFatal = function (where, error) {
+      window.__LIVE_BUILD = '2026-10-04-v3';
+      window.__liveFatal = function (where, error, extra) {
         var root = document.getElementById('root');
         if (!root) return;
         var message = error && error.message ? error.message : String(error);
+        var stack = error && error.stack ? String(error.stack).split('\n').slice(0, 4).join('\n') : '';
+        var fileName = extra && extra.fileName ? ' @ ' + extra.fileName + ':' + (extra.lineNumber || '?') : '';
         root.innerHTML =
           '<div style="max-width:640px;margin:10vh auto;padding:24px;font-family:system-ui,sans-serif;border:1px solid #fca5a5;background:#fef2f2;border-radius:12px">' +
-          '<h1 style="font-size:16px;margin:0 0 8px">Live edition failed to start (' + where + ')</h1>' +
-          '<p style="font-size:12px;color:#7f1d1d;word-break:break-word;white-space:pre-wrap"></p></div>';
-        root.querySelector('p').textContent = message;
+          '<h1 style="font-size:16px;margin:0 0 8px">Live edition failed to start (' + where + ') — build ' + window.__LIVE_BUILD + '</h1>' +
+          '<p style="font-size:12px;color:#7f1d1d;word-break:break-word;white-space:pre-wrap"></p>' +
+          '<pre style="font-size:10px;color:#9f1239;word-break:break-word;white-space:pre-wrap;margin:8px 0 0"></pre></div>';
+        root.querySelector('p').textContent = message + fileName;
+        root.querySelector('pre').textContent = stack;
       };
       window.addEventListener('error', function (event) {
-        window.__liveFatal('load', event.error || event.message);
+        window.__liveFatal('load', event.error || event.message, { fileName: event.filename, lineNumber: event.lineno });
       });
       window.addEventListener('unhandledrejection', function (event) {
         window.__liveFatal('promise', event.reason);
