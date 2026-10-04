@@ -58,13 +58,17 @@ type PGliteTransaction = {
   exec: (sql: string) => Promise<unknown>;
 };
 
+/** Schemes PGlite handles itself (no filesystem): browser IndexedDB, memory, OPFS. */
+const NON_FS_SCHEMES = [':memory:', 'idb://', 'memory://', 'file://'];
+
 async function createPgliteDatabase(dataDir: string): Promise<Database> {
   const { PGlite } = await import('@electric-sql/pglite');
 
-  if (dataDir !== ':memory:') {
+  if (!NON_FS_SCHEMES.some((scheme) => dataDir.startsWith(scheme))) {
     // PGlite creates only the leaf directory, so the parent must exist first.
-    const { mkdir } = await import('node:fs/promises');
-    await mkdir(dataDir, { recursive: true });
+    // Node-only path: in the browser edition dataDir is an `idb://` URL.
+    const fs = await import('node:fs');
+    await fs.promises.mkdir(dataDir, { recursive: true });
   }
 
   let pg: Awaited<ReturnType<typeof PGlite.create>>;

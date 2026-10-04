@@ -30,7 +30,7 @@ async function main(): Promise<void> {
   console.log(`[reset] removed ${env.PGLITE_DATA_DIR}`);
 
   run('npx', ['tsx', 'db/migrate.ts']);
-  run('npx', ['tsx', 'db/seed.ts']);
+  run('npx', ['tsx', 'db/seed-cli.ts']);
 }
 
 main().catch((error) => {

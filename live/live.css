@@ -1,0 +1,59 @@
+/* Live-edition chrome on top of the shared design tokens. */
+
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  border: 1px solid rgb(16 185 129 / 0.35);
+  background: rgb(16 185 129 / 0.08);
+  color: #047857;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 0.2rem 0.65rem;
+}
+
+.live-badge::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #10b981;
+  box-shadow: 0 0 0 0 rgb(16 185 129 / 0.5);
+  animation: live-pulse 2s ease-out infinite;
+}
+
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 rgb(16 185 129 / 0.45); }
+  70% { box-shadow: 0 0 0 7px rgb(16 185 129 / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(16 185 129 / 0); }
+}
+
+.boot-step {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: #64748b;
+  font-size: 0.85rem;
+  padding: 0.3rem 0;
+}
+
+.boot-step.done { color: #0f172a; }
+.boot-step.active { color: #0369a1; font-weight: 600; }
+
+.boot-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid rgb(3 105 165 / 0.25);
+  border-top-color: #0369a1;
+  animation: boot-spin 0.8s linear infinite;
+}
+
+@keyframes boot-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-badge::before, .boot-spinner { animation: none; }
+}

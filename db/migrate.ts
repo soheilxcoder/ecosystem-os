@@ -11,7 +11,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { readdir, readFile } from 'node:fs/promises';
+import { promises as fsp } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createDatabase, type Database, type Queryable } from './client';
@@ -27,10 +27,10 @@ export interface Migration {
 }
 
 export async function readMigrations(dir: string = MIGRATIONS_DIR): Promise<Migration[]> {
-  const files = (await readdir(dir)).filter((file) => file.endsWith('.sql')).sort();
+  const files = (await fsp.readdir(dir)).filter((file) => file.endsWith('.sql')).sort();
   return Promise.all(
     files.map(async (file) => {
-      const sql = await readFile(join(dir, file), 'utf8');
+      const sql = await fsp.readFile(join(dir, file), 'utf8');
       const [version, ...rest] = file.replace(/\.sql$/, '').split('_');
       if (!version || rest.length === 0) {
         throw new Error(`Migration file "${file}" must be named <version>_<name>.sql`);

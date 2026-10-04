@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ecosystem OS — Live Platform</title>
+    <style>
+      /* First-paint boot screen before React mounts. */
+      html, body { margin: 0; background: #f6f7f9; }
+      #root:empty::after {
+        content: 'Starting the platform inside your browser…';
+        display: block; padding: 40vh 24px 0; text-align: center;
+        font-family: system-ui, sans-serif; color: #64748b;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>

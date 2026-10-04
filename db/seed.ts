@@ -12,7 +12,6 @@
  *   npm run db:seed
  */
 
-import { createDatabase } from './client';
 import { migrate } from './migrate';
 import { createHolding, createOrg, createUser } from './repositories/users';
 import { addPodMember, createCheckin, createPod, createPodLeadTerm } from './repositories/pods';
@@ -32,7 +31,7 @@ import {
   upsertHealthSignal,
 } from './repositories/coaching';
 import { podHealthSignal, type HealthSignal } from '../core/health';
-import { insertOne, queryOne } from './client';
+import { insertOne, queryOne, type Database } from './client';
 import {
   addConflictCaseEvent,
   assignReview,
@@ -74,20 +73,19 @@ import { computeBudget } from '../server/services/budget';
 import { createEventBus } from '../core/events';
 import { persistDomainEvent } from './repositories/audit';
 import { DEFAULT_PHASE_BOUNDARIES } from '../core/calendar';
-import { loadEnv } from '../server/config';
 import { addDays, todayISO } from '../core/time';
 import type { RoleType, ScopeType, UUID } from '../core/types';
 
-const env = loadEnv();
 const TODAY = todayISO();
 
 /** Pod lead term length: 90 days, rotated by member vote (15-BUSINESS-RULES-APPENDIX.md). */
 const TERM_DAYS = 90;
 
-async function main(): Promise<void> {
-  const db = await createDatabase({ url: env.DATABASE_URL, dataDir: env.PGLITE_DATA_DIR });
-  try {
-    await migrate(db);
+/**
+ * Seed the whole demo dataset into an already-migrated database. Exported so
+ * the browser edition (live/) can run the exact same seed inside PGlite.
+ */
+export async function seedAll(db: Database): Promise<void> {
 
     const existing = await db.query('SELECT id FROM org WHERE slug = $1', ['company-x']);
     if (existing.rows.length > 0) {
@@ -1069,12 +1067,5 @@ async function main(): Promise<void> {
     console.log('[seed]   with its panel constituted; one conflict case open for cass@example.org.');
     console.log('[seed] sign in with any @example.org address, e.g. lena@example.org (Pod Lead, Atlas)');
     console.log('[seed]   rana@example.org has two proposals waiting in the CLOU inbox.');
-  } finally {
-    await db.close();
-  }
 }
 
-main().catch((error) => {
-  console.error('[seed] failed:', error);
-  process.exit(1);
-});
