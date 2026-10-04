@@ -16,6 +16,25 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Catch fatal boot failures before/after the module graph loads.
+      window.__liveFatal = function (where, error) {
+        var root = document.getElementById('root');
+        if (!root) return;
+        var message = error && error.message ? error.message : String(error);
+        root.innerHTML =
+          '<div style="max-width:640px;margin:10vh auto;padding:24px;font-family:system-ui,sans-serif;border:1px solid #fca5a5;background:#fef2f2;border-radius:12px">' +
+          '<h1 style="font-size:16px;margin:0 0 8px">Live edition failed to start (' + where + ')</h1>' +
+          '<p style="font-size:12px;color:#7f1d1d;word-break:break-word;white-space:pre-wrap"></p></div>';
+        root.querySelector('p').textContent = message;
+      };
+      window.addEventListener('error', function (event) {
+        window.__liveFatal('load', event.error || event.message);
+      });
+      window.addEventListener('unhandledrejection', function (event) {
+        window.__liveFatal('promise', event.reason);
+      });
+    </script>
     <script type="module" src="./main.tsx"></script>
   </body>
 </html>
