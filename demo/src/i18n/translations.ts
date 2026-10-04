@@ -62,6 +62,7 @@ const S = {
   'role.podLeadAtlas': { en: 'Pod Lead — Pod Atlas', fa: 'سرپرست پاد — پاد اطلس' },
   'role.coach': { en: 'Coach — Atlas, Cinder & Ember', fa: 'کوچ — اطلس، سیندر و امبر' },
   'role.hubArchitecture': { en: 'Architecture Hub', fa: 'هاب معماری' },
+  'role.hubDeployment': { en: 'Deployment Hub', fa: 'هاب استقرار' },
   'role.hubStrategic': { en: 'Strategic Interactions Hub', fa: 'هاب تعاملات راهبردی' },
   'role.investor': { en: 'Investor — Holding Pars', fa: 'سرمایه‌گذار — هلدینگ پارس' },
 
@@ -69,6 +70,7 @@ const S = {
   'seat.Pod Member': { en: 'Pod Member', fa: 'عضو پاد' },
   'seat.Coach': { en: 'Coach', fa: 'کوچ' },
   'seat.Architecture Hub': { en: 'Architecture Hub', fa: 'هاب معماری' },
+  'seat.Deployment Hub': { en: 'Deployment Hub', fa: 'هاب استقرار' },
   'seat.Strategic Interactions Hub': { en: 'Strategic Interactions Hub', fa: 'هاب تعاملات راهبردی' },
   'seat.Investor': { en: 'Investor', fa: 'سرمایه‌گذار' },
 
@@ -701,6 +703,48 @@ const S = {
   'hub.notAdminText': {
     en: 'There is no “admin override” here. A hub can start a trial, publish a report or propose a rule — but it cannot edit a pod’s score, budget or governance outcome. Those change only through their own modules, with an audit trail.',
     fa: 'اینجا هیچ «دسترسی ادمین» وجود ندارد. هاب می‌تواند دورهٔ آزمایشی شروع کند، گزارش منتشر کند یا قانونی پیشنهاد دهد — اما نمی‌تواند امتیاز، بودجه یا نتیجهٔ حکمرانی پادی را ویرایش کند. آن‌ها فقط از طریق ماژول‌های خودشان و با ردپای حسابرسی تغییر می‌کنند.',
+  },
+
+  // ------------------------------------------- deployment console (dan) ---
+  'deploy.title': { en: 'Deployment console — register a new pod', fa: 'کنسول استقرار — ثبت پاد جدید' },
+  'deploy.sub': {
+    en: 'The only door into the ecosystem. New units are never hand-added to budgets or scores: they are launched here and must earn their place through the 90-day entry trial.',
+    fa: 'تنها درِ ورود به اکوسیستم. واحدهای جدید هرگز دستی به بودجه یا امتیازها اضافه نمی‌شوند: از اینجا راه‌اندازی می‌شوند و باید جای خود را در دورهٔ آزمایشی ۹۰روزهٔ ورود به دست بیاورند.',
+  },
+  'deploy.gated': {
+    en: 'Signed in as {role}. In the live platform this wizard is enabled only for the Deployment Hub (permission hub.deploy_unit) — it is shown here read-only so you can see the flow.',
+    fa: 'با نقش «{role}» وارد شده‌اید. در نسخهٔ زنده این ویزارد فقط برای هاب استقرار (مجوز hub.deploy_unit) فعال است — اینجا برای دیدن جریان به‌صورت فقط‌خواندنی نمایش داده شده است.',
+  },
+  'deploy.live': {
+    en: 'Signed in as the Deployment Hub — this wizard is enabled for this account (permission hub.deploy_unit).',
+    fa: 'با نقش هاب استقرار وارد شده‌اید — این ویزارد برای این حساب فعال است (مجوز hub.deploy_unit).',
+  },
+  'deploy.podName': { en: 'Pod name', fa: 'نام پاد' },
+  'deploy.podNamePh': { en: 'e.g. Pod Flint', fa: 'مثلاً پاد فلینت' },
+  'deploy.holding': { en: 'Holding', fa: 'هلدینگ' },
+  'deploy.newHolding': { en: '…or create a new holding from zero', fa: '…یا ساخت هلدینگ جدید از صفر' },
+  'deploy.coach': { en: 'Assigned coach', fa: 'کوچ تخصیصی' },
+  'deploy.coachNote': {
+    en: 'Coaches never become pod members — the Coaching Hub assigns them.',
+    fa: 'کوچ‌ها هرگز عضو پاد نمی‌شوند — تخصیص آن‌ها با هاب کوچینگ است.',
+  },
+  'deploy.trialStart': { en: 'Trial start date', fa: 'تاریخ شروع دورهٔ آزمایشی' },
+  'deploy.criteria': { en: 'Launch criteria checklist', fa: 'چک‌لیست شرایط راه‌اندازی' },
+  'deploy.c1': { en: 'Pod lead selected', fa: 'سرپرست پاد انتخاب شده' },
+  'deploy.c2': { en: 'Coach assigned', fa: 'کوچ تخصیص یافته' },
+  'deploy.c3': { en: 'At least 3 founding members', fa: 'حداقل ۳ عضو بنیان‌گذار' },
+  'deploy.launch': { en: 'Launch pod', fa: 'ثبت پاد' },
+  'deploy.launched': {
+    en: 'Pod “{name}” registered — born in “trial” status. Its 90-day entry trial starts now; the Deployment Hub tracks it to the Day-90 decision.',
+    fa: 'پاد «{name}» ثبت شد — با وضعیت «آزمایشی» متولد شد. دورهٔ آزمایشی ۹۰روزهٔ آن هم‌اکنون آغاز می‌شود؛ هاب استقرار آن را تا تصمیم روز ۹۰ ردیابی می‌کند.',
+  },
+  'deploy.trialsTitle': { en: 'Entry trials in progress', fa: 'دوره‌های آزمایشی در حال اجرا' },
+  'deploy.dayOf': { en: 'Day {d} of 90', fa: 'روز {d} از ۹۰' },
+  'deploy.due': { en: 'Decision due {date}', fa: 'مهلت تصمیم: {date}' },
+  'deploy.criteriaMet': { en: '{n} of {m} criteria met', fa: '{n} از {m} شرط برقرار' },
+  'deploy.trialRule': {
+    en: 'On Day 90 the Deployment Hub records the final decision: join the ecosystem as an active pod, or leave. Until then the pod runs normally but carries the trial flag everywhere.',
+    fa: 'در روز ۹۰ هاب استقرار تصمیم نهایی را ثبت می‌کند: پیوستن به اکوسیستم به‌عنوان پاد فعال، یا خروج. تا آن روز پاد عادی کار می‌کند اما پرچم «آزمایشی» همه‌جا همراهش است.',
   },
 
   // ----------------------------------------------------------- investor ---

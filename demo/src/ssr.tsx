@@ -22,6 +22,7 @@ import { InvestorScreen } from './screens/investor';
 import type { Lang } from './i18n';
 
 const HUB = PERSONAS.find((p) => p.isHubUser)!;
+const DEPLOY = PERSONAS.find((p) => p.roleType === 'hub_deployment')!;
 
 function inLang(lang: Lang, element: React.ReactElement): string {
   return renderToString(<I18nProvider initialLang={lang}>{element}</I18nProvider>);
@@ -49,6 +50,7 @@ export function render(): string {
     parts.push(inLang(lang, <ArchiveScreen />));
     parts.push(inLang(lang, <NotificationsScreen />));
     parts.push(inLang(lang, <HubScreen persona={HUB} />));
+    parts.push(inLang(lang, <HubScreen persona={DEPLOY} />));
     parts.push(inLang(lang, <InvestorScreen />));
   }
 

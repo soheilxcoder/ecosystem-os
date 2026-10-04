@@ -10,6 +10,7 @@ const PERSON_FA: Record<string, string> = {
   'Lena Lead': 'لنا لید',
   'Cora Coach': 'کورای کوچ',
   'Ari Architect': 'آری معمار',
+  'Dan Deploy': 'دن استقرار',
   'Sana Strategic': 'سانا راهبردی',
   'Ilyas Investor': 'الیاس سرمایه‌گذار',
   'Ramin Roshan': 'رامین روشن',

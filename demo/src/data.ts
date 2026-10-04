@@ -17,13 +17,13 @@ export interface Persona {
   fullName: string;
   email: string;
   /** Translation key for the human role label. */
-  roleKey: 'role.podLeadAtlas' | 'role.coach' | 'role.hubArchitecture' | 'role.hubStrategic' | 'role.investor';
+  roleKey: 'role.podLeadAtlas' | 'role.coach' | 'role.hubArchitecture' | 'role.hubDeployment' | 'role.hubStrategic' | 'role.investor';
   roleType: string;
   isHubUser: boolean;
   podIds: string[];
   notificationCount: number;
   urgentCount: number;
-  rotation: { seatKey: 'seat.Pod Lead' | 'seat.Pod Member' | 'seat.Coach' | 'seat.Architecture Hub' | 'seat.Strategic Interactions Hub' | 'seat.Investor'; start: string; end: string }[];
+  rotation: { seatKey: 'seat.Pod Lead' | 'seat.Pod Member' | 'seat.Coach' | 'seat.Architecture Hub' | 'seat.Deployment Hub' | 'seat.Strategic Interactions Hub' | 'seat.Investor'; start: string; end: string }[];
 }
 
 export const PERSONAS: Persona[] = [
@@ -65,6 +65,18 @@ export const PERSONAS: Persona[] = [
     notificationCount: 5,
     urgentCount: 2,
     rotation: [{ seatKey: 'seat.Architecture Hub', start: '2026-01-01', end: '2027-01-01' }],
+  },
+  {
+    id: 'dan',
+    fullName: 'Dan Deploy',
+    email: 'dan@example.org',
+    roleKey: 'role.hubDeployment',
+    roleType: 'hub_deployment',
+    isHubUser: true,
+    podIds: [],
+    notificationCount: 2,
+    urgentCount: 1,
+    rotation: [{ seatKey: 'seat.Deployment Hub', start: '2026-01-01', end: '2027-01-01' }],
   },
   {
     id: 'sana',
