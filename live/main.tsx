@@ -1,3 +1,4 @@
+import './browser-env'; // MUST stay first — neutralizes any leaked Node `process` before PGlite loads
 import { createRoot } from 'react-dom/client';
 import '@fontsource-variable/inter';
 import '@fontsource/source-serif-4/400.css';
