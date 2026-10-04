@@ -1,0 +1,1 @@
+class e{constructor(r){throw new Error("The browser edition runs on embedded PGlite only; DATABASE_URL (a real PostgreSQL server) is not available here.")}}const t={Pool:e};export{e as Pool,t as default};
